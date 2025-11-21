@@ -1,0 +1,9 @@
+{
+  "name": "Gora",
+  "description": "A community-powered rural adventure travel platform connecting travelers with local hosts. Features gamification, offline maps, and safety alerts.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera",
+    "microphone"
+  ]
+}
