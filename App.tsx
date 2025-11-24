@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import BottomNav from './components/BottomNav';
 import DiscoverScreen from './screens/DiscoverScreen';
@@ -5,18 +6,39 @@ import PlannerScreen from './screens/PlannerScreen';
 import SosScreen from './screens/SosScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import { OnboardingFlow, SignInScreen, SignUpScreen } from './screens/Onboarding';
+import { 
+  OnboardingFlow, 
+  MobileEntryScreen, 
+  OTPScreen, 
+  RoleSelectionScreen, 
+  LoginRoleSelectionScreen,
+  TravelerRegistrationScreen 
+} from './screens/Onboarding';
 import HostRegistrationScreen from './screens/HostRegistration';
 import HostDashboardScreen from './screens/HostDashboardScreen';
 import { mockUser } from './constants';
+import type { User } from './types';
 
 export type Screen = 'Explore' | 'Planner' | 'SOS' | 'Connect' | 'Profile';
-export type AuthStep = 'splash' | 'welcome' | 'signin' | 'signup' | 'host-reg' | 'host-dashboard' | 'app';
+export type AuthStep = 
+  | 'splash' 
+  | 'welcome' 
+  | 'login-role-selection'
+  | 'mobile-entry' 
+  | 'otp' 
+  | 'role-selection' 
+  | 'traveler-reg' 
+  | 'host-reg' 
+  | 'host-dashboard' 
+  | 'app';
 
 const App: React.FC = () => {
   const [authStep, setAuthStep] = useState<AuthStep>('splash');
   const [activeScreen, setActiveScreen] = useState<Screen>('Explore');
-  const [userRole, setUserRole] = useState<'traveler' | 'host'>('traveler');
+  const [currentUser, setCurrentUser] = useState<User>(mockUser);
+  const [authContext, setAuthContext] = useState<'new' | 'existing'>('new');
+  const [loginRole, setLoginRole] = useState<'Host' | 'Traveler' | null>(null);
+  const [hostStatus, setHostStatus] = useState<'Pending' | 'Active'>('Active');
 
   // Simulate Splash Screen timer
   useEffect(() => {
@@ -28,43 +50,122 @@ const App: React.FC = () => {
     }
   }, [authStep]);
 
-  const handleLogin = (role: 'traveler' | 'host') => {
-    setUserRole(role);
-    if (role === 'host') {
-      setAuthStep('host-dashboard');
+  // Handle flow after OTP is verified
+  const handleOTPVerified = () => {
+    if (authContext === 'existing') {
+      // Login Flow
+      if (loginRole === 'Host') {
+        setHostStatus('Active'); // Assuming active for returning host
+        setAuthStep('host-dashboard');
+      } else {
+        // Traveler
+        setCurrentUser(mockUser);
+        setAuthStep('app');
+      }
     } else {
-      setAuthStep('app');
+      // New User Flow
+      setAuthStep('role-selection');
     }
+  };
+
+  const handleGuestAccess = () => {
+    setCurrentUser({
+      ...mockUser,
+      name: 'Guest Traveler',
+      tier: 'Guest',
+      stamps: 0
+    });
+    setAuthStep('app');
+  };
+
+  const handleTravelerRegComplete = () => {
+    setCurrentUser(mockUser); // Set to a logged in user
+    setAuthStep('app');
+  };
+
+  const handleHostRegComplete = () => {
+    setHostStatus('Pending');
+    setAuthStep('host-dashboard');
+  };
+
+  const triggerRegistration = () => {
+    setAuthStep('traveler-reg');
+  };
+
+  const handleSwitchToTraveler = () => {
+    setCurrentUser(mockUser);
+    setActiveScreen('Explore');
+    setAuthStep('app');
   };
 
   const renderContent = () => {
     switch (authStep) {
       case 'splash':
       case 'welcome':
-        return <OnboardingFlow step={authStep} setStep={setAuthStep} />;
-      case 'signin':
-        return <SignInScreen onBack={() => setAuthStep('welcome')} onLogin={handleLogin} />;
-      case 'signup':
         return (
-          <SignUpScreen 
-            onBack={() => setAuthStep('welcome')} 
-            onSignUpTraveler={() => handleLogin('traveler')}
-            onSignUpHost={() => setAuthStep('host-reg')}
+          <OnboardingFlow 
+            step={authStep} 
+            setStep={setAuthStep} 
+            setContext={setAuthContext} 
           />
         );
+      case 'login-role-selection':
+        return (
+          <LoginRoleSelectionScreen
+            onBack={() => setAuthStep('welcome')}
+            onSelectHost={() => { setLoginRole('Host'); setAuthStep('mobile-entry'); }}
+            onSelectTraveler={() => { setLoginRole('Traveler'); setAuthStep('mobile-entry'); }}
+          />
+        );
+      case 'mobile-entry':
+        return (
+          <MobileEntryScreen 
+            onBack={() => authContext === 'existing' ? setAuthStep('login-role-selection') : setAuthStep('welcome')} 
+            onNext={() => setAuthStep('otp')} 
+          />
+        );
+      case 'otp':
+        return (
+          <OTPScreen 
+            onBack={() => setAuthStep('mobile-entry')} 
+            onVerify={handleOTPVerified} 
+          />
+        );
+      case 'role-selection':
+        return (
+          <RoleSelectionScreen 
+            onBack={() => setAuthStep('welcome')}
+            onSelectTraveler={() => setAuthStep('traveler-reg')}
+            onSelectHost={() => setAuthStep('host-reg')}
+            onSkip={handleGuestAccess}
+          />
+        );
+      case 'traveler-reg':
+        return <TravelerRegistrationScreen onComplete={handleTravelerRegComplete} />;
       case 'host-reg':
-        return <HostRegistrationScreen onComplete={() => setAuthStep('host-dashboard')} />;
+        return <HostRegistrationScreen onComplete={handleHostRegComplete} />;
       case 'host-dashboard':
-        return <HostDashboardScreen onLogout={() => setAuthStep('welcome')} />;
+        return (
+          <HostDashboardScreen 
+            status={hostStatus} 
+            onLogout={() => setAuthStep('welcome')} 
+            onSwitchToTraveler={handleSwitchToTraveler}
+          />
+        );
       case 'app':
         return (
           <>
-            <main className="flex-1 overflow-y-auto pb-20 scrollbar-hide">
-              {activeScreen === 'Explore' && <DiscoverScreen user={mockUser} />}
+            <main className="flex-1 overflow-y-auto pb-20 scrollbar-hide bg-stone-50">
+              {activeScreen === 'Explore' && (
+                <DiscoverScreen 
+                  user={currentUser} 
+                  onRegister={triggerRegistration} 
+                />
+              )}
               {activeScreen === 'Planner' && <PlannerScreen />}
               {activeScreen === 'SOS' && <SosScreen />}
               {activeScreen === 'Connect' && <ConnectScreen />}
-              {activeScreen === 'Profile' && <ProfileScreen user={mockUser} />}
+              {activeScreen === 'Profile' && <ProfileScreen user={currentUser} />}
             </main>
             <BottomNav activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
           </>

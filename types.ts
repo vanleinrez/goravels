@@ -1,11 +1,49 @@
+
+export type UserLevel = 'Gora' | 'Gora X' | 'TaraGora' | 'Goravels' | 'Goramax';
+export type UserStatus = 'Working' | 'Gora' | 'Plan to go' | 'Booked' | 'Happy now';
+
+export interface Badge {
+  id: string;
+  name: string;
+  imageUrl: string;
+  category: 'Campaign' | 'Achievement';
+  isLocked: boolean;
+  description?: string;
+}
+
+export interface Post {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+    level: UserLevel;
+  };
+  location: string;
+  imageUrl: string;
+  caption: string;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  tags: string[];
+}
+
 export interface User {
   name: string;
   avatarUrl: string;
-  tier: 'Nomad' | 'Explorer' | 'Legend';
+  tier: 'Nomad' | 'Explorer' | 'Legend' | 'Guest'; // Keeping legacy tier for compatibility
+  level: UserLevel;
+  currentStatus: UserStatus;
   stamps: number;
   listings: number;
   following: number;
   followers: number;
+  totalTrips: number;
+  bio?: string;
+  location?: string;
+  isHost?: boolean;
+  hostStatus?: 'Pending' | 'Active';
+  posts?: Post[];
+  badges?: Badge[];
 }
 
 export interface Listing {
@@ -41,7 +79,12 @@ export interface Trip {
 export interface Traveler {
   id: string;
   name: string;
+  nickname: string;
   avatarUrl: string;
-  tier: 'Nomad' | 'Explorer' | 'Legend';
+  level: UserLevel;
+  status: UserStatus;
+  totalTrips: number;
+  badges: Badge[];
   isOnline: boolean;
+  distance?: string;
 }

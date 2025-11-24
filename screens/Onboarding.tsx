@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Icon from '../components/Icon';
 import { AuthStep } from '../App';
@@ -5,6 +6,7 @@ import { AuthStep } from '../App';
 interface OnboardingProps {
   step: AuthStep;
   setStep: (step: AuthStep) => void;
+  setContext: (context: 'new' | 'existing') => void;
 }
 
 const carouselData = [
@@ -34,7 +36,7 @@ const carouselData = [
   }
 ];
 
-export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep }) => {
+export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setContext }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Carousel Auto-play
@@ -183,13 +185,13 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep }) => 
       {/* Bottom Actions */}
       <div className="bg-white p-6 pb-8 space-y-3 z-20 rounded-t-2xl -mt-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <button 
-          onClick={() => setStep('signup')}
+          onClick={() => { setContext('new'); setStep('mobile-entry'); }}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex justify-center items-center"
         >
           Get Started
         </button>
         <button 
-          onClick={() => setStep('signin')}
+          onClick={() => { setContext('existing'); setStep('login-role-selection'); }}
           className="w-full py-4 bg-stone-50 border border-stone-200 hover:bg-stone-100 text-stone-600 font-bold rounded-xl transition-all active:scale-95"
         >
           I already have an account
@@ -199,87 +201,309 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep }) => 
   );
 };
 
-export const SignInScreen: React.FC<{ onBack: () => void; onLogin: (role: 'traveler' | 'host') => void }> = ({ onBack, onLogin }) => (
-  <div className="h-full bg-stone-50 p-6 flex flex-col animate-slide-in-right">
-    <button onClick={onBack} className="self-start text-stone-500 mb-8 p-2 hover:bg-stone-200 rounded-full transition-colors">
-      <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
-    </button>
-    
-    <div className="flex-1">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-stone-800 mb-2">Welcome Back</h2>
-        <p className="text-stone-500">Sign in to continue your adventure.</p>
+// --- Mobile Entry Screen ---
+export const MobileEntryScreen: React.FC<{ onBack: () => void; onNext: () => void }> = ({ onBack, onNext }) => {
+  const [mobile, setMobile] = useState('');
+
+  return (
+    <div className="h-full bg-stone-50 p-6 flex flex-col animate-slide-in-right">
+      <button onClick={onBack} className="self-start text-stone-500 mb-8 p-2 hover:bg-stone-200 rounded-full transition-colors">
+        <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+      </button>
+
+      <h2 className="text-3xl font-bold text-stone-800 mb-2">Let's start with<br/>your number</h2>
+      <p className="text-stone-500 mb-8">We'll send you a code to verify it's you.</p>
+
+      <div className="flex space-x-3 mb-6">
+        <div className="w-20 p-4 rounded-xl border border-stone-200 bg-stone-100 text-stone-600 font-bold flex items-center justify-center">
+          🇵🇭 +63
+        </div>
+        <input 
+          type="tel" 
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          placeholder="900 000 0000"
+          className="flex-1 p-4 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none text-lg tracking-wide font-medium"
+        />
       </div>
 
-      <div className="space-y-5">
-        <div>
-          <label className="block text-xs font-bold text-stone-600 uppercase mb-2 ml-1">Email</label>
-          <input type="email" className="w-full p-4 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow" placeholder="juandelacruz@example.com" />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-stone-600 uppercase mb-2 ml-1">Password</label>
-          <input type="password" className="w-full p-4 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow" placeholder="••••••••" />
-          <div className="text-right mt-2">
-            <button className="text-xs text-emerald-600 font-bold hover:underline">Forgot Password?</button>
+      <button 
+        onClick={onNext}
+        disabled={mobile.length < 10}
+        className={`w-full py-4 font-bold rounded-xl transition-all flex justify-center items-center ${
+          mobile.length >= 10 
+          ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 active:scale-95' 
+          : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+        }`}
+      >
+        Send Code
+      </button>
+    </div>
+  );
+};
+
+// --- OTP Screen ---
+export const OTPScreen: React.FC<{ 
+  onBack: () => void; 
+  onVerify: () => void; 
+}> = ({ onBack, onVerify }) => {
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+
+  const handleChange = (element: HTMLInputElement, index: number) => {
+    if (isNaN(Number(element.value))) return false;
+
+    setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
+
+    if (element.nextSibling && element.value !== "") {
+      (element.nextSibling as HTMLElement).focus();
+    }
+  };
+
+  const isComplete = otp.every(d => d !== '');
+
+  return (
+    <div className="h-full bg-stone-50 p-6 flex flex-col animate-slide-in-right">
+      <button onClick={onBack} className="self-start text-stone-500 mb-8 p-2 hover:bg-stone-200 rounded-full transition-colors">
+        <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+      </button>
+
+      <h2 className="text-3xl font-bold text-stone-800 mb-2">Enter the code</h2>
+      <p className="text-stone-500 mb-8">Sent to +63 9** *** ****</p>
+
+      <div className="flex justify-between mb-8">
+        {otp.map((data, index) => (
+          <input
+            className="w-12 h-14 border border-stone-300 rounded-xl text-center text-xl font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+            type="text"
+            name="otp"
+            maxLength={1}
+            key={index}
+            value={data}
+            onChange={(e) => handleChange(e.target, index)}
+            onFocus={(e) => e.target.select()}
+          />
+        ))}
+      </div>
+
+      <p className="text-center text-stone-500 text-sm mb-8">
+        Didn't receive it? <button className="text-emerald-600 font-bold">Resend in 30s</button>
+      </p>
+
+      <button 
+        onClick={onVerify}
+        disabled={!isComplete}
+        className={`w-full py-4 font-bold rounded-xl shadow-lg transition-all active:scale-95 flex justify-center items-center ${
+            isComplete
+            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+        }`}
+      >
+        Verify
+      </button>
+    </div>
+  );
+};
+
+// --- Login Role Selection Screen (Existing Users) ---
+export const LoginRoleSelectionScreen: React.FC<{ 
+  onBack: () => void; 
+  onSelectHost: () => void; 
+  onSelectTraveler: () => void; 
+}> = ({ onBack, onSelectHost, onSelectTraveler }) => {
+  return (
+    <div className="h-full bg-stone-50 p-6 flex flex-col animate-slide-in-right">
+       <div className="flex justify-between items-center mb-6">
+          <button onClick={onBack} className="text-stone-500 p-2 hover:bg-stone-200 rounded-full transition-colors">
+            <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+          </button>
+       </div>
+
+       <h2 className="text-3xl font-bold text-stone-800 mb-2">Welcome back!</h2>
+       <p className="text-stone-500 mb-8">Choose how you want to continue.</p>
+
+       <div className="space-y-4 flex-1">
+        <div 
+          onClick={onSelectTraveler}
+          className="bg-white p-6 rounded-3xl shadow-sm border-2 border-transparent hover:border-emerald-500 cursor-pointer transition-all group active:scale-95 relative overflow-hidden"
+        >
+          <div className="relative z-10 flex items-center space-x-4">
+             <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+               <Icon className="w-6 h-6"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></Icon>
+             </div>
+             <div>
+                 <h3 className="font-bold text-lg text-stone-800">I am a Traveler</h3>
+                 <p className="text-stone-500 text-xs">Continue exploring</p>
+             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-10 space-y-4">
-        <button onClick={() => onLogin('traveler')} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95 flex justify-center items-center">
-          <span className="mr-2">Sign In</span>
-          <Icon className="w-4 h-4"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></Icon>
-        </button>
-        
-        <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200"></div></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-stone-50 px-2 text-stone-400">Or continue with</span></div>
+        <div 
+          onClick={onSelectHost}
+          className="bg-white p-6 rounded-3xl shadow-sm border-2 border-transparent hover:border-orange-500 cursor-pointer transition-all group active:scale-95 relative overflow-hidden"
+        >
+          <div className="relative z-10 flex items-center space-x-4">
+             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+                <Icon className="w-6 h-6"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></Icon>
+             </div>
+             <div>
+                 <h3 className="font-bold text-lg text-stone-800">I am a Host</h3>
+                 <p className="text-stone-500 text-xs">Manage your listings</p>
+             </div>
+          </div>
         </div>
-
-        <button onClick={() => onLogin('host')} className="w-full py-3 bg-white border border-stone-200 hover:bg-stone-50 text-stone-600 font-bold rounded-xl transition-all flex justify-center items-center">
-           Host Demo Account
-        </button>
-      </div>
+       </div>
     </div>
-  </div>
-);
+  );
+};
 
-export const SignUpScreen: React.FC<{ onBack: () => void; onSignUpTraveler: () => void; onSignUpHost: () => void }> = ({ onBack, onSignUpTraveler, onSignUpHost }) => (
-  <div className="h-full bg-stone-50 p-6 flex flex-col animate-slide-in-right">
-    <button onClick={onBack} className="self-start text-stone-500 mb-6 p-2 hover:bg-stone-200 rounded-full transition-colors">
-      <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
-    </button>
-    
-    <h2 className="text-3xl font-bold text-stone-800 mb-8">Choose your<br/>journey</h2>
+// --- Role Selection Screen (New Users) ---
+export const RoleSelectionScreen: React.FC<{ 
+  onBack: () => void; 
+  onSelectTraveler: () => void; 
+  onSelectHost: () => void;
+  onSkip: () => void;
+}> = ({ onBack, onSelectTraveler, onSelectHost, onSkip }) => {
+  return (
+    <div className="h-full bg-stone-50 p-6 flex flex-col animate-slide-in-right">
+       <div className="flex justify-between items-center mb-6">
+          <button onClick={onBack} className="text-stone-500 p-2 hover:bg-stone-200 rounded-full transition-colors">
+            <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+          </button>
+          <button onClick={onSkip} className="text-sm font-bold text-stone-400 hover:text-stone-600">Skip</button>
+       </div>
 
-    <div className="space-y-4">
-      <div 
-        onClick={onSignUpTraveler}
-        className="bg-white p-6 rounded-2xl shadow-sm border-2 border-transparent hover:border-emerald-500 cursor-pointer transition-all group active:scale-95"
-      >
-        <div className="flex justify-between items-start mb-4">
-            <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-            <Icon className="w-7 h-7"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></Icon>
-            </div>
-            <div className="w-6 h-6 rounded-full border-2 border-stone-200 group-hover:border-emerald-500 group-hover:bg-emerald-500 transition-colors"></div>
+       <h2 className="text-3xl font-bold text-stone-800 mb-8">What's your<br/>call?</h2>
+
+       <div className="space-y-4 flex-1">
+        <div 
+          onClick={onSelectTraveler}
+          className="bg-white p-6 rounded-3xl shadow-sm border-2 border-transparent hover:border-emerald-500 cursor-pointer transition-all group active:scale-95 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
+             <Icon className="w-32 h-32"><circle cx="12" cy="12" r="10"/></Icon>
+          </div>
+          <div className="relative z-10">
+             <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-4">
+               <Icon className="w-7 h-7"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></Icon>
+             </div>
+             <h3 className="font-bold text-xl text-stone-800">I am a Traveler</h3>
+             <p className="text-stone-500 text-sm mt-2">Explore rural destinations and collect stamps.</p>
+          </div>
         </div>
-        <h3 className="font-bold text-xl text-stone-800 group-hover:text-emerald-700">I am a Traveler</h3>
-        <p className="text-stone-500 text-sm mt-2 leading-relaxed">I want to explore rural destinations, collect stamps, and book adventures.</p>
-      </div>
 
-      <div 
-        onClick={onSignUpHost}
-        className="bg-white p-6 rounded-2xl shadow-sm border-2 border-transparent hover:border-orange-500 cursor-pointer transition-all group active:scale-95"
-      >
-        <div className="flex justify-between items-start mb-4">
-             <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+        <div 
+          onClick={onSelectHost}
+          className="bg-white p-6 rounded-3xl shadow-sm border-2 border-transparent hover:border-orange-500 cursor-pointer transition-all group active:scale-95 relative overflow-hidden"
+        >
+           <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
+             <Icon className="w-32 h-32"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></Icon>
+          </div>
+          <div className="relative z-10">
+             <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 mb-4">
                 <Icon className="w-7 h-7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></Icon>
-            </div>
-            <div className="w-6 h-6 rounded-full border-2 border-stone-200 group-hover:border-orange-500 group-hover:bg-orange-500 transition-colors"></div>
+             </div>
+             <h3 className="font-bold text-xl text-stone-800">I want to be a Host</h3>
+             <p className="text-stone-500 text-sm mt-2">Share your community and culture.</p>
+          </div>
         </div>
-        <h3 className="font-bold text-xl text-stone-800 group-hover:text-orange-700">I want to be a Host</h3>
-        <p className="text-stone-500 text-sm mt-2 leading-relaxed">I want to share my community, culture, or property with travelers.</p>
+       </div>
+    </div>
+  );
+}
+
+// --- Traveler Registration Screen ---
+export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  return (
+    <div className="h-full bg-stone-50 flex flex-col animate-slide-in-right">
+      <div className="bg-white px-6 py-4 border-b border-stone-200 sticky top-0 z-10">
+        <h1 className="font-bold text-stone-800">Traveler Registration</h1>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+         <div className="space-y-6">
+            <h2 className="font-bold text-lg text-stone-800">Basic Details</h2>
+            <div className="space-y-3">
+              <Input label="Nickname" placeholder="What should we call you?" />
+              <Input label="Full Name" placeholder="Juan Dela Cruz" />
+              <Input label="Birthday" type="date" />
+              <Input label="Nationality" placeholder="Filipino" />
+              <Input label="State / Province" placeholder="Bukidnon" />
+              <div>
+                  <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Gender</label>
+                  <div className="flex space-x-3">
+                      {['Male', 'Female', 'Prefer not to say'].map(g => (
+                        <label key={g} className="flex items-center px-3 py-2 border rounded-lg bg-white">
+                           <input type="radio" name="gender" className="mr-2" /> <span className="text-sm">{g}</span>
+                        </label>
+                      ))}
+                  </div>
+              </div>
+            </div>
+
+            <hr className="border-stone-200" />
+
+            <h2 className="font-bold text-lg text-stone-800">Preferences</h2>
+            <div>
+              <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Interests</label>
+              <div className="flex flex-wrap gap-2">
+                 {[
+                   'Beach', 'Mountain', 'Community', 'Experience', 
+                   'Adventure', 'Outdoor Sports', 'Foods', 
+                   'Transportation', 'Events', 'For a Cause', 'Volunteer'
+                 ].map(interest => (
+                    <label key={interest} className="inline-flex items-center px-3 py-1.5 rounded-full border bg-white cursor-pointer hover:bg-emerald-50 hover:border-emerald-200">
+                        <input type="checkbox" className="mr-2" /> <span className="text-sm">{interest}</span>
+                    </label>
+                 ))}
+              </div>
+            </div>
+
+            <hr className="border-stone-200" />
+
+            <h2 className="font-bold text-lg text-stone-800">Social Group / Accessibility</h2>
+            <div>
+               <p className="text-xs text-stone-500 mb-3">This helps us recommend places with the right facilities.</p>
+               <div className="space-y-2">
+                  {[
+                    'Person with Disability (Needs access & assistance)',
+                    'Elderly (Needs access & assistance)',
+                    'Indigenous People (IP)',
+                    'LGBTQIA+',
+                    'None / Prefer not to say'
+                  ].map((group, idx) => (
+                     <label key={idx} className="flex items-start p-3 border rounded-xl bg-white">
+                        <input type="radio" name="socialGroup" className="mt-1 mr-3" />
+                        <span className="text-sm text-stone-700">{group}</span>
+                     </label>
+                  ))}
+               </div>
+            </div>
+
+            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-sm text-stone-700">
+                <label className="flex items-start">
+                   <input type="checkbox" className="mt-1 mr-3 h-5 w-5 text-emerald-600" />
+                   <span>I read and agree to TaraGo's <span className="font-bold underline text-emerald-700">Terms, Conditions, Policy, and Data Privacy</span>.</span>
+                </label>
+            </div>
+         </div>
+      </div>
+
+      <div className="p-4 bg-white border-t border-stone-200">
+         <button onClick={onComplete} className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
+            Submit Registration
+         </button>
       </div>
     </div>
+  );
+}
+
+const Input: React.FC<{ label: string; placeholder?: string; type?: string }> = ({ label, placeholder, type = 'text' }) => (
+  <div>
+      <label className="block text-xs font-bold text-stone-600 uppercase mb-2">{label}</label>
+      <input 
+          type={type} 
+          className="w-full p-3 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" 
+          placeholder={placeholder} 
+      />
   </div>
 );

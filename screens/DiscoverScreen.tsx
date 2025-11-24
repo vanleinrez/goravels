@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { User } from '../types';
 import { mockListings, mockSafetyZones } from '../constants';
@@ -7,13 +8,24 @@ import MapView from '../components/MapView';
 
 interface DiscoverScreenProps {
   user: User;
+  onRegister: () => void;
 }
 
 type ViewMode = 'list' | 'map';
 
-const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user }) => {
+const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [showAlert, setShowAlert] = useState(true);
+
+  // Helper to intercept actions if user is a guest
+  const handleProtectedAction = () => {
+    if (user.tier === 'Guest') {
+      onRegister();
+    } else {
+      // Proceed with action (mock for now)
+      console.log('Action performed by registered user');
+    }
+  };
 
   const ViewToggleButton: React.FC<{
     mode: ViewMode;
@@ -34,7 +46,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user }) => {
   );
 
   return (
-    <div className="bg-stone-50 min-h-full">
+    <div className="bg-stone-50 min-h-full pb-20">
       {/* Weather Alert Banner */}
       {showAlert && (
         <div className="bg-amber-100 border-b border-amber-200 px-4 py-3 flex justify-between items-start animate-fade-in">
@@ -61,12 +73,29 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user }) => {
             <p className="text-stone-500 text-sm font-medium">Mabuhay,</p>
             <h1 className="text-2xl font-bold text-stone-800">{user.name.split(' ')[0]}!</h1>
           </div>
-          <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 relative">
-            <Icon className="w-5 h-5"><path d="M6 9l6 6 6-6" /></Icon>
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+          <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 relative overflow-hidden">
+             {user.tier === 'Guest' ? (
+                 <Icon className="w-5 h-5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>
+             ) : (
+                <img src={user.avatarUrl} alt="User" className="w-full h-full object-cover" />
+             )}
           </div>
         </header>
         
+        {/* Guest Banner */}
+        {user.tier === 'Guest' && (
+            <div 
+                onClick={onRegister}
+                className="bg-stone-800 text-white p-4 rounded-xl shadow-md flex justify-between items-center cursor-pointer"
+            >
+                <div>
+                    <h3 className="font-bold text-sm">Create an account</h3>
+                    <p className="text-xs text-stone-400">Sign up to book adventures and collect stamps.</p>
+                </div>
+                <Icon className="w-5 h-5 text-emerald-400"><polyline points="9 18 15 12 9 6" /></Icon>
+            </div>
+        )}
+
         {/* Search Bar */}
         <div className="relative shadow-sm">
           <input
@@ -104,7 +133,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user }) => {
         {viewMode === 'list' ? (
           <div className="space-y-8 animate-fade-in">
             {/* Campaign Banner */}
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+            <div onClick={handleProtectedAction} className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden cursor-pointer active:scale-95 transition-transform">
               <div className="relative z-10">
                 <span className="bg-white/20 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">New Campaign</span>
                 <h2 className="font-bold text-xl mt-2">The Coffee Trail ☕</h2>
@@ -126,7 +155,9 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user }) => {
               </div>
               <div className="flex overflow-x-auto pb-4 -mx-4 px-4 space-x-4 scrollbar-hide">
                 {mockListings.filter(l => l.category === 'Adventure').map(listing => (
-                  <ListingCard key={listing.id} listing={listing} />
+                  <div key={listing.id} onClick={handleProtectedAction}>
+                      <ListingCard listing={listing} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -139,7 +170,9 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user }) => {
               </div>
               <div className="flex overflow-x-auto pb-4 -mx-4 px-4 space-x-4 scrollbar-hide">
                 {mockListings.filter(l => l.category === 'Experience').map(listing => (
-                  <ListingCard key={listing.id} listing={listing} />
+                  <div key={listing.id} onClick={handleProtectedAction}>
+                    <ListingCard listing={listing} />
+                  </div>
                 ))}
               </div>
             </div>
