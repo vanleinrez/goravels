@@ -1,11 +1,14 @@
 
 import React, { useState } from 'react';
 import Icon from '../components/Icon';
+import SosScreen from './SosScreen';
 
 interface HostDashboardProps {
   onLogout: () => void;
   status?: 'Pending' | 'Active';
   onSwitchToTraveler: () => void;
+  isTripActive?: boolean;
+  onToggleTrip?: () => void;
 }
 
 type Tab = 'Overview' | 'Listings' | 'Calendar' | 'Earnings' | 'Settings';
@@ -77,9 +80,10 @@ const MOCK_LISTINGS = [
   { id: 'l3', title: 'Bukidnon Cloud House', status: 'Under Review', price: 3200, views: 0, bookings: 0 },
 ];
 
-const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 'Active', onSwitchToTraveler }) => {
+const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 'Active', onSwitchToTraveler, isTripActive, onToggleTrip }) => {
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [showSosModal, setShowSosModal] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
@@ -163,6 +167,26 @@ const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 
     <div className="h-full bg-stone-50 flex flex-col relative overflow-hidden">
       <Sidebar />
 
+      {/* Host Floating SOS Button */}
+      {isTripActive && !showSosModal && (
+          <button 
+            onClick={() => setShowSosModal(true)}
+            className="absolute bottom-6 right-6 z-40 bg-red-600 text-white p-4 rounded-full shadow-lg border-4 border-white animate-pulse"
+            aria-label="SOS Panic Button"
+          >
+             <Icon className="w-8 h-8 font-bold">
+               <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </Icon>
+          </button>
+      )}
+
+      {/* SOS Modal Overlay */}
+      {showSosModal && (
+          <div className="absolute inset-0 z-[60]">
+             <SosScreen onComplete={() => { setShowSosModal(false); if(onToggleTrip) onToggleTrip(); }} />
+          </div>
+      )}
+
       {/* Header */}
       <header className="bg-white px-6 py-4 border-b border-stone-200 flex justify-between items-center sticky top-0 z-30 shadow-sm">
         <div className="flex items-center">
@@ -171,12 +195,21 @@ const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 
           </button>
           <h1 className="ml-3 font-bold text-stone-800 text-lg">{activeTab}</h1>
         </div>
+        
+        {/* Activity Simulation Toggle for Host (Demo Purpose) */}
         {status === 'Active' && (
-            <div className="flex space-x-3">
-            <button className="p-2 text-stone-500 hover:bg-stone-100 rounded-full relative">
-                <Icon className="w-6 h-6"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></Icon>
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
+            <div className="flex items-center space-x-2">
+                {onToggleTrip && (
+                    <button onClick={onToggleTrip} className={`text-[10px] font-bold px-2 py-1 rounded border ${isTripActive ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-stone-100 text-stone-500 border-stone-200'}`}>
+                        {isTripActive ? 'ACTIVITY ACTIVE' : 'NO ACTIVITY'}
+                    </button>
+                )}
+                <div className="flex space-x-3">
+                    <button className="p-2 text-stone-500 hover:bg-stone-100 rounded-full relative">
+                        <Icon className="w-6 h-6"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></Icon>
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    </button>
+                </div>
             </div>
         )}
       </header>

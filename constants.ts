@@ -50,78 +50,6 @@ export const mockPosts: Post[] = [
     imageUrl: 'https://images.unsplash.com/photo-1589985236891-5cb317867dc8?auto=format&fit=crop&w=800',
     caption: 'Learned traditional weaving today. So much respect for our culture. 🧶🇵🇭 #TribalImmersion',
     likes: 340, comments: 12, timestamp: '2d ago', tags: ['Culture', 'Immersion']
-  },
-  { 
-    id: 'p6', 
-    user: { name: 'Tom Cruise', avatar: 'https://picsum.photos/id/177/200/200', level: 'Gora X' },
-    location: 'Initao, Lasang Secret Adventure',
-    imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800',
-    caption: 'Spelunking and beach hopping in one day! 🦇🏖️ #Initao #Cave',
-    likes: 455, comments: 34, timestamp: '3d ago', tags: ['Adventure', 'Cave']
-  },
-  { 
-    id: 'p7', 
-    user: { name: 'Chef Boy', avatar: 'https://picsum.photos/id/292/200/200', level: 'TaraGora' },
-    location: 'Magsaysay, Misamis Oriental',
-    imageUrl: 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&w=800',
-    caption: 'Farm to table cooking workshop. The kinilaw was the best! 🐟🍋 #Foodie #Cooking',
-    likes: 678, comments: 56, timestamp: '3d ago', tags: ['Food', 'Workshop']
-  },
-  { 
-    id: 'p8', 
-    user: { name: 'Nature Boi', avatar: 'https://picsum.photos/id/338/200/200', level: 'Gora' },
-    location: 'Tiklas Falls, Gingoog City',
-    imageUrl: 'https://images.unsplash.com/photo-1465189684280-6a8fa9b19a7a?auto=format&fit=crop&w=800',
-    caption: 'Chasing waterfalls in Gingoog. 🌈 #Gingoog #Nature',
-    likes: 233, comments: 8, timestamp: '4d ago', tags: ['Waterfalls', 'Trekking']
-  },
-  { 
-    id: 'p9', 
-    user: { name: 'Beach Bum', avatar: 'https://picsum.photos/id/435/200/200', level: 'Goramax' },
-    location: 'Medina, Misamis Oriental',
-    imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800',
-    caption: 'Golden hour at the beach. Quiet and peaceful. 🌅 #Medina #Beach',
-    likes: 890, comments: 45, timestamp: '5d ago', tags: ['Beach', 'Sunset']
-  },
-  { 
-    id: 'p10', 
-    user: { name: 'Farmer Joe', avatar: 'https://picsum.photos/id/550/200/200', level: 'TaraGora' },
-    location: 'Impasug-ong, Bukidnon',
-    imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800',
-    caption: 'Harvesting pineapples today! 🍍 Sweetest in the world. #Farming #Bukidnon',
-    likes: 560, comments: 78, timestamp: '6d ago', tags: ['Farming', 'Experience']
-  },
-  { 
-    id: 'p11', 
-    user: { name: 'Adv. Kate', avatar: 'https://picsum.photos/id/823/200/200', level: 'Goravels' },
-    location: 'Seven Seas, Opol',
-    imageUrl: 'https://images.unsplash.com/photo-1572331165267-854da2b00dc3?auto=format&fit=crop&w=800',
-    caption: 'Waterpark fun with the barkada! 🌊🎢 #SevenSeas #Opol',
-    likes: 345, comments: 22, timestamp: '1w ago', tags: ['Fun', 'Waterpark']
-  },
-  { 
-    id: 'p12', 
-    user: { name: 'Zen Master', avatar: 'https://picsum.photos/id/999/200/200', level: 'Goramax' },
-    location: 'Monastery of Transfiguration, Malaybalay',
-    imageUrl: 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800',
-    caption: 'Finding peace and coffee. 🙏☕ #Malaybalay #Spiritual',
-    likes: 670, comments: 33, timestamp: '1w ago', tags: ['Spiritual', 'Coffee']
-  },
-  { 
-    id: 'p13', 
-    user: { name: 'Trail Blazer', avatar: 'https://picsum.photos/id/1015/200/200', level: 'TaraGora' },
-    location: 'Mt. Kitanglad Range',
-    imageUrl: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=800',
-    caption: 'Summit reached! The mossy forest is magical. 🏔️🧚‍♀️ #Trekking #Mountains',
-    likes: 999, comments: 150, timestamp: '2w ago', tags: ['Trekking', 'Mountains']
-  },
-  { 
-    id: 'p14', 
-    user: { name: 'River Queen', avatar: 'https://picsum.photos/id/1020/200/200', level: 'Gora X' },
-    location: 'Pulangi River',
-    imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800',
-    caption: 'Sunset river cruise. 🛶🌅 #Pulangi #River',
-    likes: 450, comments: 20, timestamp: '2w ago', tags: ['River', 'Relax']
   }
 ];
 
@@ -138,70 +66,138 @@ export const mockUser: User = {
   followers: 128,
   bio: 'Digital nomad loving the rural vibes. Always up for a coffee run! ☕️🌿',
   location: 'Cagayan de Oro, PH',
+  preferences: ['Adventures', 'Stays', 'Eats'],
   posts: mockPosts,
   badges: [mockBadges[0], mockBadges[1]]
 };
 
 export const mockListings: Listing[] = [
+  // BUKIDNON
   {
-    id: '1',
-    title: 'Singalong Nature Camp',
-    location: 'Haynoni, Magsaysay',
-    rating: 4.8,
-    reviews: 12,
-    price: 1714,
-    imageUrl: 'https://picsum.photos/seed/singalong/600/400',
-    category: 'Adventure',
-    lat: 8.87,
-    lng: 125.21,
+    id: '1', title: 'Dahilayan Adventure Park', location: 'Manolo Fortich, Bukidnon',
+    rating: 4.8, reviews: 342, price: 1500, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1533234962703-2312c8742a8b?auto=format&fit=crop&w=800',
+    lat: 8.219, lng: 124.877, isTrending: true
   },
   {
-    id: '2',
-    title: 'Hidden Valley Farm Stay',
-    location: 'Impasug-ong, Bukidnon',
-    rating: 4.9,
-    reviews: 25,
-    price: 2500,
-    imageUrl: 'https://picsum.photos/seed/farmstay/600/400',
-    category: 'Space',
-    lat: 8.31,
-    lng: 125.00,
+    id: '2', title: 'Mt. Kitanglad Range Trek', location: 'Impasug-ong, Bukidnon',
+    rating: 4.9, reviews: 89, price: 3500, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800',
+    lat: 8.132, lng: 124.918, isTrending: true
   },
   {
-    id: '3',
-    title: 'Mt. Kitanglad Trek',
-    location: 'Kitanglad Range',
-    rating: 5.0,
-    reviews: 8,
-    price: 3500,
-    imageUrl: 'https://picsum.photos/seed/kitanglad/600/400',
-    category: 'Adventure',
-    lat: 8.12,
-    lng: 124.92,
+    id: '3', title: 'Kampo Juan', location: 'Manolo Fortich, Bukidnon',
+    rating: 4.6, reviews: 120, price: 800, category: 'Experientials',
+    imageUrl: 'https://images.unsplash.com/photo-1595964267468-d731885f8386?auto=format&fit=crop&w=800',
+    lat: 8.358, lng: 124.821
   },
   {
-    id: '4',
-    title: 'Local Weaving Workshop',
-    location: 'Lantapan, Bukidnon',
-    rating: 4.7,
-    reviews: 15,
-    price: 950,
-    imageUrl: 'https://picsum.photos/seed/weaving/600/400',
-    category: 'Experience',
-    lat: 8.05,
-    lng: 124.98,
+    id: '4', title: 'Monastery of Transfiguration', location: 'Malaybalay, Bukidnon',
+    rating: 4.9, reviews: 450, price: 0, category: 'Immersions',
+    imageUrl: 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800',
+    lat: 8.114, lng: 125.127
   },
   {
-    id: '5',
-    title: 'Stanlang Wood House',
-    location: 'Gingoog City',
-    rating: 4.6,
-    reviews: 18,
-    price: 1950,
-    imageUrl: 'https://picsum.photos/seed/woodhouse/600/400',
-    category: 'Space',
-    lat: 8.82,
-    lng: 125.10,
+    id: '5', title: 'Kaamulan Festival', location: 'Malaybalay, Bukidnon',
+    rating: 5.0, reviews: 1200, price: 500, category: 'Events',
+    imageUrl: 'https://images.unsplash.com/photo-1589985236891-5cb317867dc8?auto=format&fit=crop&w=800',
+    lat: 8.155, lng: 125.132, isTrending: true
+  },
+  {
+    id: '6', title: 'Rotyponds Ridge', location: 'Impasug-ong, Bukidnon',
+    rating: 4.7, reviews: 67, price: 1200, category: 'Riders',
+    imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800',
+    lat: 8.356, lng: 125.021, isNew: true
+  },
+  {
+    id: '7', title: 'Communal Ranch', location: 'Impasug-ong, Bukidnon',
+    rating: 4.8, reviews: 210, price: 300, category: 'Experientials',
+    imageUrl: 'https://images.unsplash.com/photo-1516934024742-b461fba47600?auto=format&fit=crop&w=800',
+    lat: 8.283, lng: 125.067
+  },
+
+  // MISAMIS ORIENTAL
+  {
+    id: '8', title: 'Seven Seas Waterpark', location: 'Opol, Misamis Oriental',
+    rating: 4.7, reviews: 890, price: 1000, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1572331165267-854da2b00dc3?auto=format&fit=crop&w=800',
+    lat: 8.514, lng: 124.597, isTrending: true
+  },
+  {
+    id: '9', title: 'Claveria View Deck', location: 'Claveria, Misamis Oriental',
+    rating: 4.6, reviews: 340, price: 100, category: 'Riders',
+    imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800',
+    lat: 8.650, lng: 124.917
+  },
+  {
+    id: '10', title: 'Amaya View', location: 'Cagayan de Oro',
+    rating: 4.8, reviews: 560, price: 1500, category: 'Eats',
+    imageUrl: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=800',
+    lat: 8.423, lng: 124.662
+  },
+  {
+    id: '11', title: 'Duka Bay Resort', location: 'Medina, Misamis Oriental',
+    rating: 4.5, reviews: 120, price: 2500, category: 'Stays',
+    imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800',
+    lat: 8.917, lng: 125.033
+  },
+  {
+    id: '12', title: 'Mangrove Planting', location: 'Opol, Misamis Oriental',
+    rating: 4.9, reviews: 45, price: 0, category: 'Voluntourism',
+    imageUrl: 'https://images.unsplash.com/photo-1464582883107-8adf2dca8a9f?auto=format&fit=crop&w=800',
+    lat: 8.520, lng: 124.580, isNew: true
+  },
+  {
+    id: '13', title: 'Lasang Secret Adventure', location: 'Initao, Misamis Oriental',
+    rating: 4.4, reviews: 88, price: 500, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800',
+    lat: 8.490, lng: 124.310
+  },
+
+  // LANAO DEL NORTE
+  {
+    id: '14', title: 'Tinago Falls', location: 'Iligan City, Lanao Del Norte',
+    rating: 4.9, reviews: 670, price: 100, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800',
+    lat: 8.158, lng: 124.187, isTrending: true
+  },
+  {
+    id: '15', title: 'Maria Cristina Falls', location: 'Iligan City, Lanao Del Norte',
+    rating: 4.8, reviews: 540, price: 100, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1533423797697-39d671295e26?auto=format&fit=crop&w=800',
+    lat: 8.183, lng: 124.192
+  },
+  {
+    id: '16', title: 'School Supply Drive', location: 'Munai, Lanao Del Norte',
+    rating: 5.0, reviews: 12, price: 0, category: 'For a cause',
+    imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800',
+    lat: 7.980, lng: 124.050, isNew: true
+  },
+
+  // MISAMIS OCCIDENTAL
+  {
+    id: '17', title: 'Hoyohoy Highland Chapel', location: 'Tangub City, Misamis Occ.',
+    rating: 4.6, reviews: 90, price: 200, category: 'Experientials',
+    imageUrl: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=800',
+    lat: 8.080, lng: 123.750
+  },
+  {
+    id: '18', title: 'Cotta Fort', location: 'Ozamiz City, Misamis Occ.',
+    rating: 4.5, reviews: 230, price: 50, category: 'Immersions',
+    imageUrl: 'https://images.unsplash.com/photo-1599592237996-2679dc651475?auto=format&fit=crop&w=800',
+    lat: 8.140, lng: 123.840
+  },
+  {
+    id: '19', title: 'Lake Duminagat', location: 'Don Victoriano, Misamis Occ.',
+    rating: 4.8, reviews: 30, price: 1000, category: 'Adventures',
+    imageUrl: 'https://images.unsplash.com/photo-1439853949127-fa647821eba0?auto=format&fit=crop&w=800',
+    lat: 8.283, lng: 123.633, isNew: true
+  },
+  {
+    id: '20', title: 'MisOcc Aquamarine Park', location: 'Sinacaban, Misamis Occ.',
+    rating: 4.3, reviews: 150, price: 300, category: 'Stays',
+    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800',
+    lat: 8.280, lng: 123.800
   },
 ];
 
@@ -246,7 +242,6 @@ export const mockTravelers: Traveler[] = [
   { id: 'u2', name: 'Jane Smith', nickname: 'Janey', avatarUrl: 'https://picsum.photos/seed/u2/100/100', level: 'Goravels', status: 'Happy now', totalTrips: 52, badges: [mockBadges[1], mockBadges[2], mockBadges[5]], isOnline: false, distance: '1.2 km' },
   { id: 'u3', name: 'Mike Ross', nickname: 'Mikey', avatarUrl: 'https://picsum.photos/seed/u3/100/100', level: 'Goramax', status: 'Booked', totalTrips: 80, badges: [mockBadges[0], mockBadges[1], mockBadges[2], mockBadges[3]], isOnline: true, distance: '2.0 km' },
   { id: 'u4', name: 'Sarah L.', nickname: 'Sars', avatarUrl: 'https://picsum.photos/seed/u4/100/100', level: 'Gora X', status: 'Plan to go', totalTrips: 15, badges: [mockBadges[4]], isOnline: true, distance: '5.0 km' },
-  // Inactive / Less active users for "Scratch back"
   { id: 'u5', name: 'Bob Dy', nickname: 'Bobby', avatarUrl: 'https://picsum.photos/seed/u5/100/100', level: 'Gora', status: 'Working', totalTrips: 2, badges: [], isOnline: false },
   { id: 'u6', name: 'Alice Guo', nickname: 'Ali', avatarUrl: 'https://picsum.photos/seed/u6/100/100', level: 'Gora', status: 'Working', totalTrips: 0, badges: [], isOnline: false },
 ];

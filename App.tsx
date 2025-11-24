@@ -10,8 +10,8 @@ import {
   OnboardingFlow, 
   MobileEntryScreen, 
   OTPScreen, 
-  RoleSelectionScreen, 
   LoginRoleSelectionScreen,
+  RoleSelectionScreen, 
   TravelerRegistrationScreen 
 } from './screens/Onboarding';
 import HostRegistrationScreen from './screens/HostRegistration';
@@ -39,6 +39,9 @@ const App: React.FC = () => {
   const [authContext, setAuthContext] = useState<'new' | 'existing'>('new');
   const [loginRole, setLoginRole] = useState<'Host' | 'Traveler' | null>(null);
   const [hostStatus, setHostStatus] = useState<'Pending' | 'Active'>('Active');
+  
+  // New state to track ongoing activity
+  const [isTripActive, setIsTripActive] = useState(false);
 
   // Simulate Splash Screen timer
   useEffect(() => {
@@ -98,6 +101,8 @@ const App: React.FC = () => {
     setAuthStep('app');
   };
 
+  const toggleTripStatus = () => setIsTripActive(!isTripActive);
+
   const renderContent = () => {
     switch (authStep) {
       case 'splash':
@@ -150,6 +155,8 @@ const App: React.FC = () => {
             status={hostStatus} 
             onLogout={() => setAuthStep('welcome')} 
             onSwitchToTraveler={handleSwitchToTraveler}
+            isTripActive={isTripActive}
+            onToggleTrip={toggleTripStatus}
           />
         );
       case 'app':
@@ -162,12 +169,28 @@ const App: React.FC = () => {
                   onRegister={triggerRegistration} 
                 />
               )}
-              {activeScreen === 'Planner' && <PlannerScreen />}
-              {activeScreen === 'SOS' && <SosScreen />}
+              {activeScreen === 'Planner' && (
+                <PlannerScreen 
+                  isTripActive={isTripActive} 
+                  onToggleTrip={toggleTripStatus} 
+                />
+              )}
+              {activeScreen === 'SOS' && (
+                <SosScreen 
+                  onComplete={() => {
+                    setIsTripActive(false); 
+                    setActiveScreen('Explore');
+                  }} 
+                />
+              )}
               {activeScreen === 'Connect' && <ConnectScreen />}
               {activeScreen === 'Profile' && <ProfileScreen user={currentUser} />}
             </main>
-            <BottomNav activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
+            <BottomNav 
+              activeScreen={activeScreen} 
+              setActiveScreen={setActiveScreen} 
+              isTripActive={isTripActive}
+            />
           </>
         );
       default:

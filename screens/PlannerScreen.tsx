@@ -1,12 +1,47 @@
+
 import React from 'react';
 import Icon from '../components/Icon';
 import { mockTrips } from '../constants';
 
-const PlannerScreen: React.FC = () => {
+interface PlannerProps {
+  isTripActive: boolean;
+  onToggleTrip: () => void;
+}
+
+const PlannerScreen: React.FC<PlannerProps> = ({ isTripActive, onToggleTrip }) => {
   return (
     <div className="p-4 min-h-full bg-stone-50">
       <h1 className="text-2xl font-bold text-stone-800 mb-6">Your Planner</h1>
       
+      {/* Activity Status Simulator */}
+      <div className={`p-5 rounded-2xl shadow-sm border mb-6 transition-all ${isTripActive ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-white border-stone-100'}`}>
+          <div className="flex justify-between items-center mb-3">
+              <div>
+                  <h3 className={`font-bold text-lg ${isTripActive ? 'text-white' : 'text-stone-800'}`}>
+                      {isTripActive ? 'Trip in Progress' : 'No Active Trip'}
+                  </h3>
+                  <p className={`text-xs ${isTripActive ? 'text-emerald-100' : 'text-stone-500'}`}>
+                      {isTripActive ? 'SOS Button is now active.' : 'Start a trip to enable safety features.'}
+                  </p>
+              </div>
+              <div className={`p-2 rounded-full ${isTripActive ? 'bg-white/20' : 'bg-stone-100'}`}>
+                  <Icon className={`w-6 h-6 ${isTripActive ? 'text-white' : 'text-stone-400'}`}>
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+                  </Icon>
+              </div>
+          </div>
+          <button 
+            onClick={onToggleTrip}
+            className={`w-full py-3 rounded-xl font-bold text-sm shadow-sm transition-transform active:scale-95 ${
+                isTripActive 
+                ? 'bg-white text-emerald-700 hover:bg-emerald-50' 
+                : 'bg-stone-900 text-white hover:bg-stone-800'
+            }`}
+          >
+              {isTripActive ? 'End Current Trip' : 'Start Trip Simulation'}
+          </button>
+      </div>
+
       <div className="space-y-6">
         {/* Itinerary Builder CTA */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex items-center justify-between">

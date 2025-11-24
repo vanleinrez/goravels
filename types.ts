@@ -2,6 +2,17 @@
 export type UserLevel = 'Gora' | 'Gora X' | 'TaraGora' | 'Goravels' | 'Goramax';
 export type UserStatus = 'Working' | 'Gora' | 'Plan to go' | 'Booked' | 'Happy now';
 
+export type ListingCategory = 
+  | 'Adventures' 
+  | 'Experientials' 
+  | 'Immersions' 
+  | 'Stays' 
+  | 'Riders' 
+  | 'Eats' 
+  | 'Events' 
+  | 'Voluntourism' 
+  | 'For a cause';
+
 export interface Badge {
   id: string;
   name: string;
@@ -44,6 +55,7 @@ export interface User {
   hostStatus?: 'Pending' | 'Active';
   posts?: Post[];
   badges?: Badge[];
+  preferences?: string[];
 }
 
 export interface Listing {
@@ -54,9 +66,11 @@ export interface Listing {
   reviews: number;
   price: number;
   imageUrl: string;
-  category: 'Space' | 'Adventure' | 'Experience';
+  category: ListingCategory;
   lat: number;
   lng: number;
+  isTrending?: boolean;
+  isNew?: boolean;
 }
 
 export interface SafetyZone {

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Icon from './Icon';
 import { Screen } from '../App';
@@ -5,6 +6,7 @@ import { Screen } from '../App';
 interface BottomNavProps {
   activeScreen: Screen;
   setActiveScreen: (screen: Screen) => void;
+  isTripActive?: boolean;
 }
 
 interface NavItemProps {
@@ -13,14 +15,25 @@ interface NavItemProps {
   isActive: boolean;
   onClick: () => void;
   isSpecial?: boolean;
+  disabled?: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ label, icon, isActive, onClick, isSpecial }) => {
+const NavItem: React.FC<NavItemProps> = ({ label, icon, isActive, onClick, isSpecial, disabled }) => {
   if (isSpecial) {
+    if (disabled) {
+       return (
+        <button disabled className="w-16 flex flex-col items-center justify-center opacity-30 cursor-not-allowed">
+           <div className="bg-gray-200 text-gray-400 p-4 rounded-full border-4 border-white">
+             {icon}
+           </div>
+           <span className="text-[10px] font-medium mt-1 uppercase tracking-wide text-gray-400">SOS</span>
+        </button>
+       );
+    }
     return (
       <button
         onClick={onClick}
-        className="relative -top-6 bg-red-600 text-white p-4 rounded-full shadow-lg border-4 border-white transform transition-transform active:scale-95 hover:bg-red-700"
+        className={`relative -top-6 bg-red-600 text-white p-4 rounded-full shadow-lg border-4 border-white transform transition-all active:scale-95 hover:bg-red-700 animate-pulse`}
         aria-label="SOS Panic Button"
       >
         {icon}
@@ -31,9 +44,10 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon, isActive, onClick, isSpe
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`flex flex-col items-center justify-center w-full pt-2 pb-1 transition-colors duration-200 ${
         isActive ? 'text-emerald-600' : 'text-gray-400 hover:text-emerald-500'
-      }`}
+      } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
     >
       {icon}
       <span className="text-[10px] font-medium mt-1 uppercase tracking-wide">{label}</span>
@@ -41,7 +55,7 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon, isActive, onClick, isSpe
   );
 };
 
-const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen, isTripActive = false }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto h-16 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
       <div className="flex justify-around items-end h-full pb-2">
@@ -69,11 +83,13 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen }) 
              </Icon>
           }
         />
+        {/* SOS Button logic handled inside NavItem based on isTripActive */}
         <NavItem
           label="SOS"
           isActive={activeScreen === 'SOS'}
           onClick={() => setActiveScreen('SOS')}
           isSpecial
+          disabled={!isTripActive}
           icon={
             <Icon className="w-7 h-7 font-bold">
                <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
