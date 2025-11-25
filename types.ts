@@ -71,6 +71,7 @@ export interface Listing {
   lng: number;
   isTrending?: boolean;
   isNew?: boolean;
+  sponsorshipTier?: 'Major' | 'Minor'; // New field for paid boosting
   // Extended Details
   description?: string;
   howToGetThere?: string;
@@ -81,6 +82,12 @@ export interface Listing {
     avatar: string;
     role: string;
     bio: string;
+    isVerified?: boolean;
+    joinedDate?: string;
+    languages?: string[];
+    responseRate?: number;
+    responseTime?: string;
+    badges?: string[];
   };
   itinerary?: { time: string; activity: string }[];
   refundPolicy?: string;
@@ -99,9 +106,23 @@ export interface SafetyZone {
 export interface Trip {
   id: string;
   title: string;
+  location: string;
   date: string;
   status: 'Upcoming' | 'Completed';
   imageUrl: string;
+  price?: number;
+}
+
+export type NotificationType = 'payment_success' | 'payment_failed' | 'payment_pending' | 'voucher' | 'activity' | 'general';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  data?: any; // For linking to specific trips or vouchers
 }
 
 export interface Traveler {

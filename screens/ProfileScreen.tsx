@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
-import type { User, UserStatus } from '../types';
+import type { User, UserStatus, Notification } from '../types';
 import Icon from '../components/Icon';
 
 interface ProfileScreenProps {
   user: User;
   onLogout: () => void;
   onSwitchToHost: () => void;
+  notifications: Notification[];
+  onMarkRead: () => void;
 }
 
 // Reusing Input component locally for Edit Modal
@@ -52,7 +54,7 @@ const StatusPill: React.FC<{ status: UserStatus; isActive?: boolean; onClick?: (
   );
 };
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchToHost }) => {
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchToHost, notifications, onMarkRead }) => {
   const [activeTab, setActiveTab] = useState<'Moments' | 'Collectibles' | 'Info'>('Collectibles');
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(user.currentStatus);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
@@ -82,13 +84,26 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
       tempUnit: 'C' // C or F
   });
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Sarah liked your photo', time: '2m', read: false },
-    { id: 2, text: 'You earned the "Early Bird" badge!', time: '1h', read: false },
-  ]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleNotificationClick = () => {
+      setShowNotifications(!showNotifications);
+      if (!showNotifications && unreadCount > 0) {
+          onMarkRead();
+      }
+  };
+
+  const getNotificationIcon = (type: string) => {
+      switch(type) {
+          case 'payment_success': return <Icon className="w-4 h-4 text-emerald-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
+          case 'payment_failed': return <Icon className="w-4 h-4 text-red-500"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Icon>;
+          case 'voucher': return <Icon className="w-4 h-4 text-purple-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>;
+          case 'activity': return <Icon className="w-4 h-4 text-orange-500"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
+          default: return <Icon className="w-4 h-4 text-blue-500"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></Icon>;
+      }
+  };
 
   const LevelProgress = () => {
     let nextLevelTrips = 10;
@@ -291,24 +306,34 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
       <div className="bg-white p-4 flex justify-between items-center sticky top-0 z-20 border-b border-stone-50">
         <h1 className="font-bold text-lg text-stone-800">Profile</h1>
         <div className="flex space-x-4">
-          <button className="relative" onClick={() => setShowNotifications(!showNotifications)}>
+          <button className="relative" onClick={handleNotificationClick}>
             <Icon className="w-6 h-6 text-stone-600"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></Icon>
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
             )}
             {/* Notification Dropdown */}
             {showNotifications && (
-              <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden z-30">
-                 <div className="p-3 border-b border-stone-50 font-bold text-xs text-stone-500">Notifications</div>
-                 {notifications.map(n => (
-                   <div key={n.id} className="p-3 hover:bg-stone-50 border-b border-stone-50 flex items-start">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full mt-1.5 mr-2"></div>
-                      <div>
-                        <p className="text-xs font-medium text-stone-800">{n.text}</p>
-                        <p className="text-[10px] text-stone-400">{n.time} ago</p>
-                      </div>
-                   </div>
-                 ))}
+              <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden z-30">
+                 <div className="p-3 border-b border-stone-50 font-bold text-xs text-stone-500 bg-stone-50">Notifications</div>
+                 <div className="max-h-64 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-stone-400">No new notifications</div>
+                    ) : (
+                        notifications.map(n => (
+                        <div key={n.id} className={`p-3 border-b border-stone-50 flex items-start hover:bg-stone-50 ${!n.read ? 'bg-emerald-50/50' : ''}`}>
+                            <div className="mt-0.5 mr-3 flex-shrink-0">
+                                {getNotificationIcon(n.type)}
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-stone-800">{n.title}</p>
+                                <p className="text-xs text-stone-500 leading-snug">{n.message}</p>
+                                <p className="text-[10px] text-stone-400 mt-1">{n.time}</p>
+                            </div>
+                            {!n.read && <div className="w-2 h-2 bg-emerald-500 rounded-full mt-1.5 ml-auto flex-shrink-0"></div>}
+                        </div>
+                        ))
+                    )}
+                 </div>
               </div>
             )}
           </button>

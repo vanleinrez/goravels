@@ -167,19 +167,6 @@ const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 
     <div className="h-full bg-stone-50 flex flex-col relative overflow-hidden">
       <Sidebar />
 
-      {/* Host Floating SOS Button */}
-      {isTripActive && !showSosModal && (
-          <button 
-            onClick={() => setShowSosModal(true)}
-            className="absolute bottom-6 right-6 z-40 bg-red-600 text-white p-4 rounded-full shadow-lg border-4 border-white animate-pulse"
-            aria-label="SOS Panic Button"
-          >
-             <Icon className="w-8 h-8 font-bold">
-               <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-            </Icon>
-          </button>
-      )}
-
       {/* SOS Modal Overlay */}
       {showSosModal && (
           <div className="absolute inset-0 z-[60]">

@@ -84,7 +84,13 @@ const commonDetails = {
         name: "Kuya Ben",
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=200&h=200",
         role: "Certified Local Guide",
-        bio: "I've been guiding travelers in Bukidnon for over 10 years. I love sharing stories about our ancestral lands."
+        bio: "I've been guiding travelers in Bukidnon for over 10 years. I love sharing stories about our ancestral lands and local traditions.",
+        isVerified: true,
+        joinedDate: "October 2018",
+        languages: ["English", "Tagalog", "Cebuano", "Higaonon"],
+        responseRate: 100,
+        responseTime: "within an hour",
+        badges: ["Licensed Guide", "First Aid Certified", "Community Leader", "Eco-Advocate"]
     },
     itinerary: [
         { time: "08:00 AM", activity: "Meet up at Town Plaza" },
@@ -103,7 +109,7 @@ export const mockListings: Listing[] = [
     id: '1', title: 'Dahilayan Adventure Park', location: 'Manolo Fortich, Bukidnon',
     rating: 4.8, reviews: 342, price: 1500, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1533234962703-2312c8742a8b?auto=format&fit=crop&w=800',
-    lat: 8.219, lng: 124.877, isTrending: true,
+    lat: 8.219, lng: 124.877, isTrending: true, sponsorshipTier: 'Major',
     ...commonDetails,
     priceBreakdown: [{ item: "Park Entrance", amount: 500 }, { item: "Zipline Ride", amount: 700 }, { item: "Guide & Gear", amount: 300 }]
   },
@@ -111,7 +117,7 @@ export const mockListings: Listing[] = [
     id: '2', title: 'Mt. Kitanglad Range Trek', location: 'Impasug-ong, Bukidnon',
     rating: 4.9, reviews: 89, price: 3500, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800',
-    lat: 8.132, lng: 124.918, isTrending: true,
+    lat: 8.132, lng: 124.918, isTrending: true, sponsorshipTier: 'Major',
     ...commonDetails,
     priceBreakdown: [{ item: "Permit Fee", amount: 1000 }, { item: "Guide Fee (2 Days)", amount: 2000 }, { item: "Porter (10kg)", amount: 500 }]
   },
@@ -119,7 +125,7 @@ export const mockListings: Listing[] = [
     id: '3', title: 'Kampo Juan', location: 'Manolo Fortich, Bukidnon',
     rating: 4.6, reviews: 120, price: 800, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1595964267468-d731885f8386?auto=format&fit=crop&w=800',
-    lat: 8.358, lng: 124.821,
+    lat: 8.358, lng: 124.821, sponsorshipTier: 'Minor',
     ...commonDetails
   },
   {
@@ -134,14 +140,14 @@ export const mockListings: Listing[] = [
     id: '5', title: 'Kaamulan Festival', location: 'Malaybalay, Bukidnon',
     rating: 5.0, reviews: 1200, price: 500, category: 'Events',
     imageUrl: 'https://images.unsplash.com/photo-1589985236891-5cb317867dc8?auto=format&fit=crop&w=800',
-    lat: 8.155, lng: 125.132, isTrending: true,
+    lat: 8.155, lng: 125.132, isTrending: true, sponsorshipTier: 'Major',
     ...commonDetails
   },
   {
     id: '6', title: 'Rotyponds Ridge', location: 'Impasug-ong, Bukidnon',
     rating: 4.7, reviews: 67, price: 1200, category: 'Riders',
     imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800',
-    lat: 8.356, lng: 125.021, isNew: true,
+    lat: 8.356, lng: 125.021, isNew: true, sponsorshipTier: 'Minor',
     ...commonDetails
   },
   {
@@ -157,7 +163,7 @@ export const mockListings: Listing[] = [
     id: '8', title: 'Seven Seas Waterpark', location: 'Opol, Misamis Oriental',
     rating: 4.7, reviews: 890, price: 1000, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1572331165267-854da2b00dc3?auto=format&fit=crop&w=800',
-    lat: 8.514, lng: 124.597, isTrending: true,
+    lat: 8.514, lng: 124.597, isTrending: true, sponsorshipTier: 'Major',
     ...commonDetails
   },
   {
@@ -171,7 +177,7 @@ export const mockListings: Listing[] = [
     id: '10', title: 'Amaya View', location: 'Cagayan de Oro',
     rating: 4.8, reviews: 560, price: 1500, category: 'Eats',
     imageUrl: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=800',
-    lat: 8.423, lng: 124.662,
+    lat: 8.423, lng: 124.662, sponsorshipTier: 'Minor',
     ...commonDetails
   },
   {
@@ -201,7 +207,7 @@ export const mockListings: Listing[] = [
     id: '14', title: 'Tinago Falls', location: 'Iligan City, Lanao Del Norte',
     rating: 4.9, reviews: 670, price: 100, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800',
-    lat: 8.158, lng: 124.187, isTrending: true,
+    lat: 8.158, lng: 124.187, isTrending: true, sponsorshipTier: 'Major',
     ...commonDetails
   },
   {
@@ -224,7 +230,7 @@ export const mockListings: Listing[] = [
     id: '17', title: 'Hoyohoy Highland Chapel', location: 'Tangub City, Misamis Occ.',
     rating: 4.6, reviews: 90, price: 200, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=800',
-    lat: 8.080, lng: 123.750,
+    lat: 8.080, lng: 123.750, sponsorshipTier: 'Minor',
     ...commonDetails
   },
   {
@@ -273,6 +279,7 @@ export const mockTrips: Trip[] = [
   {
     id: 't1',
     title: 'Bukidnon Roadtrip',
+    location: 'Bukidnon, Philippines',
     date: 'Oct 12 - 15, 2024',
     status: 'Upcoming',
     imageUrl: 'https://picsum.photos/seed/roadtrip/200/200'
@@ -280,6 +287,7 @@ export const mockTrips: Trip[] = [
   {
     id: 't2',
     title: 'Camiguin Island',
+    location: 'Camiguin, Philippines',
     date: 'Aug 5 - 8, 2024',
     status: 'Completed',
     imageUrl: 'https://picsum.photos/seed/camiguin/200/200'

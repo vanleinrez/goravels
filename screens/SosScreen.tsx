@@ -3,7 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import Icon from '../components/Icon';
 
 interface SosScreenProps {
-  onComplete?: () => void;
+  onComplete?: () => void; // Resolved/Safe
+  onMinimize?: () => void; // Keep active, hide modal
+  onClose?: () => void; // Cancel before sending
+  initialStep?: 'IDLE' | 'LEVEL_SELECT' | 'CONFIRM' | 'SENT';
 }
 
 type EmergencyLevel = 1 | 2 | 3;
@@ -40,8 +43,8 @@ const EMERGENCY_TYPES: EmergencyType[] = [
   }
 ];
 
-const SosScreen: React.FC<SosScreenProps> = ({ onComplete }) => {
-  const [step, setStep] = useState<'IDLE' | 'LEVEL_SELECT' | 'CONFIRM' | 'SENT'>('IDLE');
+const SosScreen: React.FC<SosScreenProps> = ({ onComplete, onMinimize, onClose, initialStep = 'IDLE' }) => {
+  const [step, setStep] = useState<'IDLE' | 'LEVEL_SELECT' | 'CONFIRM' | 'SENT'>(initialStep);
   const [selectedLevel, setSelectedLevel] = useState<EmergencyType | null>(null);
   const [pressTimer, setPressTimer] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -57,7 +60,7 @@ const SosScreen: React.FC<SosScreenProps> = ({ onComplete }) => {
           setStep('LEVEL_SELECT');
           return 100;
         }
-        return prev + 2; // Speed of fill (approx 3 seconds total with interval 20ms and step 2, actually 20ms*50 steps = 1s. Adjust step to 0.7 for ~3s)
+        return prev + 2; // Speed of fill
       });
     }, 20);
   };
@@ -84,6 +87,18 @@ const SosScreen: React.FC<SosScreenProps> = ({ onComplete }) => {
 
   const handleFinish = () => {
       if (onComplete) onComplete();
+  };
+
+  const handleMinimize = () => {
+      if (onMinimize) onMinimize();
+  };
+
+  const handleCancel = () => {
+      if (onClose) {
+          onClose();
+      } else {
+          setStep('IDLE');
+      }
   };
 
   return (
@@ -138,6 +153,9 @@ const SosScreen: React.FC<SosScreenProps> = ({ onComplete }) => {
                     <span className="text-xs font-medium opacity-80 mt-1">3 SECONDS</span>
                 </div>
             </button>
+            {onClose && (
+                <button onClick={onClose} className="mt-8 text-stone-500 font-bold text-sm">Close</button>
+            )}
         </div>
       )}
 
@@ -169,7 +187,7 @@ const SosScreen: React.FC<SosScreenProps> = ({ onComplete }) => {
                       </button>
                   ))}
               </div>
-              <button onClick={() => setStep('IDLE')} className="py-4 text-stone-400 font-bold">Cancel</button>
+              <button onClick={handleCancel} className="py-4 text-stone-400 font-bold">Cancel</button>
           </div>
       )}
 
@@ -234,14 +252,24 @@ const SosScreen: React.FC<SosScreenProps> = ({ onComplete }) => {
                   </div>
               </div>
 
-              <div className="mt-10">
-                  <p className="text-xs text-stone-500 mb-4">Emergency resolved?</p>
+              <div className="mt-10 w-full max-w-xs space-y-3">
                   <button 
-                    onClick={handleFinish}
-                    className="px-8 py-3 bg-stone-800 text-white rounded-xl font-bold border border-stone-700"
+                    onClick={handleMinimize}
+                    className="w-full px-8 py-3 bg-stone-700 hover:bg-stone-600 text-white rounded-xl font-bold border border-stone-600 flex items-center justify-center"
                   >
-                    I am safe now
+                     <Icon className="w-5 h-5 mr-2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></Icon>
+                     Minimize & Open Map
                   </button>
+                  
+                  <div className="pt-4 border-t border-stone-800">
+                      <p className="text-xs text-stone-500 mb-3">Emergency resolved?</p>
+                      <button 
+                        onClick={handleFinish}
+                        className="w-full px-8 py-3 bg-stone-900 text-stone-400 hover:text-white rounded-xl font-bold border border-stone-800"
+                      >
+                        I am safe now
+                      </button>
+                  </div>
               </div>
           </div>
       )}

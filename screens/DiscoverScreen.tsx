@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import type { User, ListingCategory, Listing } from '../types';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import type { User, ListingCategory, Listing, Trip, Notification } from '../types';
 import { mockListings, mockSafetyZones } from '../constants';
 import ListingCard from '../components/ListingCard';
 import Icon from '../components/Icon';
@@ -9,10 +9,12 @@ import MapView, { MapViewHandle, MapLayerType } from '../components/MapView';
 interface DiscoverScreenProps {
   user: User;
   onRegister: () => void;
+  onAddTrip?: (trip: Trip) => void;
+  onAddNotification?: (notification: Notification) => void;
 }
 
 type ViewMode = 'list' | 'map';
-type BookingStep = 'overview' | 'details' | 'payment';
+type BookingStep = 'overview' | 'details' | 'payment' | 'host-profile';
 
 const CATEGORIES: { id: ListingCategory | 'All'; label: string; icon: string }[] = [
     { id: 'All', label: 'All', icon: '🌍' },
@@ -27,11 +29,15 @@ const CATEGORIES: { id: ListingCategory | 'All'; label: string; icon: string }[]
     { id: 'For a cause', label: 'For a cause', icon: '🤝' },
 ];
 
-const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => {
+const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAddTrip, onAddNotification }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [showAlert, setShowAlert] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<ListingCategory | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Discover Rural State
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState(5);
   
   // Map State
   const [mapRadius, setMapRadius] = useState(20); // Default 20km
@@ -51,10 +57,6 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
   const [bookedListings, setBookedListings] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
-  // Payment Form
-  const [paymentMethod, setPaymentMethod] = useState('GCash');
-  const [agreeTerms, setAgreeTerms] = useState(false);
-
   // Map Controller Ref
   const mapRef = useRef<MapViewHandle>(null);
 
@@ -84,7 +86,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
         }
       },
       (error) => {
-        console.error("Error retrieving location:", error);
+        console.error(`Error retrieving location: ${error.message} (Code: ${error.code})`);
         setIsLocating(false);
       },
       {
@@ -108,14 +110,55 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
 
   const handleBook = () => {
       setIsProcessingPayment(true);
+      // Simulate Payment Processing
       setTimeout(() => {
           if (selectedListing) {
+            // 1. Add to Local State
             setBookedListings(prev => [...prev, selectedListing.id]);
+            
+            // 2. Add to Global Planner
+            if (onAddTrip) {
+                const newTrip: Trip = {
+                    id: `trip-${Date.now()}`,
+                    title: selectedListing.title,
+                    location: selectedListing.location,
+                    date: 'Oct 28 - 30, 2024', // Mock date
+                    status: 'Upcoming',
+                    imageUrl: selectedListing.imageUrl,
+                    price: selectedListing.price
+                };
+                onAddTrip(newTrip);
+            }
+
+            // 3. Trigger Notification
+            if (onAddNotification) {
+                onAddNotification({
+                    id: `notif-${Date.now()}`,
+                    type: 'payment_success',
+                    title: 'Booking Confirmed!',
+                    message: `Payment for ${selectedListing.title} was successful. Trip added to planner.`,
+                    time: 'Just now',
+                    read: false
+                });
+                
+                // Simulate an activity reminder
+                setTimeout(() => {
+                    onAddNotification({
+                        id: `notif-act-${Date.now()}`,
+                        type: 'activity',
+                        title: 'Upcoming Adventure',
+                        message: `Get ready for ${selectedListing.title} next week!`,
+                        time: 'Just now',
+                        read: false
+                    });
+                }, 3000);
+            }
           }
+          
           setIsProcessingPayment(false);
           setBookingStep('overview');
           setSelectedListing(null);
-          alert("Booking Successful!");
+          
       }, 2000);
   };
 
@@ -142,14 +185,44 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
       setMapBearing(prev => prev + deg);
   };
 
-  const filteredListings = mockListings.filter(l => {
-      const matchesCategory = selectedCategory === 'All' || l.category === selectedCategory;
-      const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            l.location.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-  });
+  const handleDiscoverClick = () => {
+      setIsDiscovering(true);
+      setDisplayLimit(5);
+  };
 
-  const mapListings = filteredListings.filter(l => {
+  const handleShowMore = () => {
+      setDisplayLimit(prev => prev + 5);
+  };
+  
+  const handleGoTop = () => {
+      const main = document.querySelector('main');
+      if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Logic to process listings: Filter -> Separate Sponsored -> Randomize Sponsored -> Sort Organic -> Combine
+  const visibleListings = useMemo(() => {
+      const filtered = mockListings.filter(l => {
+          const matchesCategory = selectedCategory === 'All' || l.category === selectedCategory;
+          const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                l.location.toLowerCase().includes(searchQuery.toLowerCase());
+          return matchesCategory && matchesSearch;
+      });
+
+      // Split into Sponsored and Organic
+      const sponsored = filtered.filter(l => !!l.sponsorshipTier);
+      const organic = filtered.filter(l => !l.sponsorshipTier);
+
+      // Randomize Sponsored items
+      const shuffledSponsored = [...sponsored].sort(() => Math.random() - 0.5);
+
+      // Sort Organic items by rating
+      const sortedOrganic = [...organic].sort(() => Math.random() - 0.5);
+
+      return [...shuffledSponsored, ...sortedOrganic];
+  }, [selectedCategory, searchQuery]);
+
+  // Map view logic (uses raw distance filter on visible listings)
+  const mapListings = visibleListings.filter(l => {
       const R = 6371; // km
       const dLat = (l.lat - userLocation.lat) * Math.PI / 180;
       const dLon = (l.lng - userLocation.lng) * Math.PI / 180;
@@ -186,6 +259,71 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
   const renderModalContent = () => {
     if (!selectedListing) return null;
 
+    // --- STEP: HOST PROFILE ---
+    if (bookingStep === 'host-profile' && selectedListing.host) {
+        const host = selectedListing.host;
+        return (
+            <>
+                <div className="bg-white px-4 py-4 pt-12 sm:py-3 sm:pt-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm shrink-0">
+                    <button onClick={() => setBookingStep('details')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
+                        <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
+                    </button>
+                    <h2 className="ml-2 font-bold text-stone-800">Host Profile</h2>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-stone-50/50 space-y-6">
+                    {/* Hero Profile Card */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 flex flex-col items-center text-center">
+                        <div className="relative mb-3">
+                             <img src={host.avatar} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" alt={host.name} />
+                             {host.isVerified && (
+                                 <div className="absolute bottom-0 right-0 bg-blue-500 text-white p-1 rounded-full border-2 border-white shadow-sm" title="Identity Verified">
+                                     <Icon className="w-4 h-4"><polyline points="20 6 9 17 4 12" /></Icon>
+                                 </div>
+                             )}
+                        </div>
+                        <h2 className="text-xl font-bold text-stone-800 flex items-center justify-center">
+                            {host.name}
+                        </h2>
+                        <p className="text-sm font-bold text-emerald-600 mb-4">{host.role}</p>
+
+                        <div className="grid grid-cols-3 gap-4 w-full border-t border-stone-100 pt-4">
+                            <div>
+                                <p className="font-bold text-stone-800 text-lg">4.9</p>
+                                <p className="text-[10px] text-stone-500 uppercase tracking-wide">Rating</p>
+                            </div>
+                            <div className="border-l border-stone-100">
+                                <p className="font-bold text-stone-800 text-lg">124</p>
+                                <p className="text-[10px] text-stone-500 uppercase tracking-wide">Reviews</p>
+                            </div>
+                            <div className="border-l border-stone-100">
+                                <p className="font-bold text-stone-800 text-lg">5</p>
+                                <p className="text-[10px] text-stone-500 uppercase tracking-wide">Years</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* About Section */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
+                         <h3 className="font-bold text-stone-800 mb-3">About {host.name.split(' ')[0]}</h3>
+                         <p className="text-sm text-stone-600 leading-relaxed mb-4">
+                             {host.bio || `Hi, I'm ${host.name}! I love sharing the beauty of my hometown.`}
+                         </p>
+                         <div className="flex flex-wrap gap-2 mb-4">
+                             {host.languages?.map(lang => (
+                                 <span key={lang} className="text-xs bg-stone-100 text-stone-600 px-2 py-1 rounded-lg font-medium">{lang}</span>
+                             ))}
+                         </div>
+                         <div className="flex items-center text-xs text-stone-500">
+                             <Icon className="w-4 h-4 mr-2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
+                             Lives in {selectedListing.location.split(',')[1] || 'Mindanao'}
+                         </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+    
     // --- STEP 1: OVERVIEW ---
     if (bookingStep === 'overview') {
         return (
@@ -291,252 +429,53 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
             </div>
         );
     }
-
-    // --- STEP 2: DETAILS (Trip Info) ---
-    if (bookingStep === 'details') {
-        return (
-            <>
-            <div className="bg-white px-4 py-4 pt-12 sm:py-3 sm:pt-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm shrink-0">
-                <button onClick={() => setBookingStep('overview')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
-                    <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
-                </button>
-                <h2 className="ml-2 font-bold text-stone-800">Trip Details</h2>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-stone-50/50">
-                
-                {/* Host Info */}
-                {selectedListing.host && (
-                    <div className="flex items-start space-x-4 bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
-                        <img src={selectedListing.host.avatar} className="w-14 h-14 rounded-full object-cover border-2 border-emerald-100 shadow-sm" alt={selectedListing.host.name} />
-                        <div>
-                            <p className="text-xs font-bold text-stone-400 uppercase">Hosted by</p>
-                            <h3 className="font-bold text-stone-800">{selectedListing.host.name}</h3>
-                            <p className="text-xs text-emerald-600 font-bold mb-1">{selectedListing.host.role}</p>
-                            <p className="text-xs text-stone-500 leading-snug">"{selectedListing.host.bio}"</p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Description - Repeated for detail context */}
-                <div>
-                     <h3 className="font-bold text-stone-800 mb-2">About This Experience</h3>
-                     <p className="text-sm text-stone-600 leading-relaxed">
-                        {selectedListing.description}
-                     </p>
-                </div>
-
-                {/* How to get there */}
-                <div>
-                    <h3 className="font-bold text-stone-800 mb-2 flex items-center">
-                        <Icon className="w-5 h-5 mr-2 text-blue-500"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></Icon>
-                        How to Get There
-                    </h3>
-                    <p className="text-sm text-stone-600 leading-relaxed bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        {selectedListing.howToGetThere || "Instructions available upon booking."}
-                    </p>
-                </div>
-
-                {/* Itinerary */}
-                {selectedListing.itinerary && (
-                    <div>
-                        <h3 className="font-bold text-stone-800 mb-4 flex items-center">
-                            <Icon className="w-5 h-5 mr-2 text-orange-500"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>
-                            Itinerary
-                        </h3>
-                        <div className="space-y-0 border-l-2 border-stone-200 ml-2.5">
-                            {selectedListing.itinerary.map((item, idx) => (
-                                <div key={idx} className="relative pl-6 pb-6 last:pb-0">
-                                    <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-stone-300 border-2 border-white ring-2 ring-stone-100"></div>
-                                    <p className="text-xs font-bold text-stone-400 mb-0.5">{item.time}</p>
-                                    <p className="text-sm font-medium text-stone-800">{item.activity}</p>
+    
+    // --- STEP 2 & 3: DETAILS & PAYMENT ---
+     if (bookingStep === 'details' || bookingStep === 'payment') {
+         return (
+             <div className="p-6 bg-white h-full overflow-y-auto">
+                 <div className="flex items-center mb-6">
+                    <button onClick={() => setBookingStep(bookingStep === 'details' ? 'overview' : 'details')} className="mr-2 text-stone-500">
+                        <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+                    </button>
+                    <h2 className="font-bold text-lg text-stone-800">{bookingStep === 'details' ? 'Details' : 'Payment'}</h2>
+                 </div>
+                 {bookingStep === 'details' && (
+                     <div className="space-y-6">
+                         <div>
+                            <h3 className="font-bold text-stone-800 mb-2">Itinerary</h3>
+                            {selectedListing.itinerary?.map((item, i) => (
+                                <div key={i} className="flex space-x-3 text-sm">
+                                    <span className="font-bold text-stone-500 w-20">{item.time}</span>
+                                    <span className="text-stone-700">{item.activity}</span>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Inclusions & Rules */}
-                <div className="grid grid-cols-1 gap-6">
-                    <div>
-                        <h3 className="font-bold text-stone-800 mb-3">Inclusions</h3>
-                        <div className="bg-white rounded-xl border border-stone-100 p-4">
-                            <ul className="space-y-3">
-                                {selectedListing.inclusions?.map((inc, i) => (
-                                    <li key={i} className="flex items-center text-sm text-stone-600">
-                                        <Icon className="w-4 h-4 mr-2 text-emerald-500"><polyline points="20 6 9 17 4 12"/></Icon>
-                                        {inc}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="font-bold text-stone-800 mb-3">Community Rules</h3>
-                        <div className="space-y-2">
-                             {selectedListing.rules?.map((rule, i) => (
-                                 <div key={i} className="flex items-start p-3 bg-white border border-stone-100 rounded-lg">
-                                     <span className="text-lg mr-3">{rule.icon || '⚠️'}</span>
-                                     <div>
-                                         <p className="text-xs font-bold text-stone-700">{rule.title}</p>
-                                         <p className="text-[10px] text-stone-500 mt-0.5">{rule.text}</p>
-                                     </div>
-                                 </div>
-                             ))}
-                        </div>
-                    </div>
-                </div>
-
-                 {/* Price Breakdown */}
-                 {selectedListing.priceBreakdown && (
-                    <div className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
-                         <h3 className="font-bold text-stone-800 mb-3 flex items-center">
-                            <Icon className="w-5 h-5 mr-2 text-emerald-600"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></Icon>
-                            Price Breakdown
-                        </h3>
-                        <div className="space-y-2">
-                             {selectedListing.priceBreakdown.map((item, i) => (
-                                 <div key={i} className="flex justify-between text-sm text-stone-600">
-                                     <span>{item.item}</span>
-                                     <span>₱{item.amount.toLocaleString()}</span>
-                                 </div>
-                             ))}
-                             <div className="flex justify-between font-bold text-stone-800 pt-2 border-t border-stone-100 mt-2">
-                                 <span>Total</span>
-                                 <span className="text-emerald-700">₱{selectedListing.price.toLocaleString()}</span>
-                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Refund Policy */}
-                <div className="bg-stone-100 p-4 rounded-xl border border-stone-200">
-                     <h3 className="font-bold text-stone-700 text-xs uppercase mb-1">Refund Policy</h3>
-                     <p className="text-xs text-stone-500 leading-relaxed">
-                         {selectedListing.refundPolicy || "Standard policy applies."}
-                     </p>
-                </div>
-
-                {/* Non-sticky Book Now Button (Merged into scroll content) */}
-                <div className="pt-4 pb-16">
-                     <button 
-                        onClick={() => setBookingStep('payment')}
-                        className="w-full bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center hover:bg-stone-800"
-                    >
-                        Book Now
-                    </button>
-                </div>
-            </div>
-            </>
-        );
-    }
-
-    // --- STEP 3: PAYMENT ---
-    if (bookingStep === 'payment') {
-        const total = selectedListing.price;
-        return (
-            <>
-            <div className="bg-white px-4 py-4 pt-12 sm:py-3 sm:pt-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm shrink-0">
-                <button onClick={() => setBookingStep('details')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
-                    <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
-                </button>
-                <h2 className="ml-2 font-bold text-stone-800">Review & Pay</h2>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-stone-50/50">
-                
-                {/* Order Summary */}
-                <div className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
-                    <h3 className="font-bold text-stone-800 mb-3">Booking Summary</h3>
-                    <div className="flex items-center mb-4">
-                         <img src={selectedListing.imageUrl} className="w-16 h-16 rounded-lg object-cover mr-3 bg-stone-200" />
-                         <div>
-                             <p className="font-bold text-sm text-stone-800">{selectedListing.title}</p>
-                             <p className="text-xs text-stone-500">{selectedListing.location}</p>
-                             <p className="text-xs text-stone-500 mt-1">1 Guest • {selectedListing.category}</p>
                          </div>
-                    </div>
-                    
-                    <div className="space-y-2 border-t border-stone-100 pt-3">
-                         {selectedListing.priceBreakdown ? selectedListing.priceBreakdown.map((item, i) => (
-                             <div key={i} className="flex justify-between text-xs text-stone-600">
-                                 <span>{item.item}</span>
-                                 <span>₱{item.amount.toLocaleString()}</span>
+                         <button onClick={() => setBookingStep('payment')} className="w-full bg-stone-900 text-white py-3 rounded-xl font-bold">Proceed to Payment</button>
+                     </div>
+                 )}
+                 {bookingStep === 'payment' && (
+                     <div className="space-y-6">
+                         <div className="bg-stone-50 p-4 rounded-xl">
+                             <h3 className="font-bold text-stone-800 mb-2">Order Summary</h3>
+                             <div className="flex justify-between text-sm">
+                                 <span>{selectedListing.title}</span>
+                                 <span>₱{selectedListing.price}</span>
                              </div>
-                         )) : (
-                             <div className="flex justify-between text-xs text-stone-600">
-                                 <span>Base Rate</span>
-                                 <span>₱{selectedListing.price.toLocaleString()}</span>
-                             </div>
-                         )}
-                         <div className="flex justify-between font-bold text-stone-800 pt-2 border-t border-stone-100 mt-2">
-                             <span>Total</span>
-                             <span className="text-emerald-700 text-lg">₱{total.toLocaleString()}</span>
                          </div>
-                    </div>
-                </div>
-
-                {/* Payment Methods */}
-                <div>
-                    <h3 className="font-bold text-stone-800 mb-3">Payment Method</h3>
-                    <div className="space-y-2">
-                         {['GCash', 'Maya', 'Credit/Debit Card'].map(method => (
-                             <label key={method} className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === method ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' : 'bg-white border-stone-200 hover:border-emerald-200'}`}>
-                                 <div className="flex items-center">
-                                     <input 
-                                        type="radio" 
-                                        name="payment" 
-                                        className="mr-3 h-5 w-5 text-emerald-600 focus:ring-emerald-500" 
-                                        checked={paymentMethod === method}
-                                        onChange={() => setPaymentMethod(method)}
-                                     />
-                                     <span className="font-medium text-stone-700">{method}</span>
-                                 </div>
-                                 <Icon className={`w-5 h-5 ${paymentMethod === method ? 'text-emerald-600' : 'text-stone-300'}`}>
-                                     {method === 'Credit/Debit Card' ? <rect x="2" y="5" width="20" height="14" rx="2" /> : <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />}
-                                 </Icon>
-                             </label>
-                         ))}
-                    </div>
-                </div>
-
-                {/* Terms */}
-                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                    <label className="flex items-start cursor-pointer">
-                        <input 
-                            type="checkbox" 
-                            className="mt-1 mr-3 h-5 w-5 text-emerald-600 rounded focus:ring-emerald-500"
-                            checked={agreeTerms}
-                            onChange={(e) => setAgreeTerms(e.target.checked)} 
-                        />
-                        <span className="text-xs text-stone-600 leading-snug">
-                            I agree to the <span className="font-bold underline">Terms & Conditions</span>, <span className="font-bold underline">Refund Policy</span>, and <span className="font-bold underline">Community Guidelines</span> regarding local culture and environment protection.
-                        </span>
-                    </label>
-                </div>
-            </div>
-
-            <div className="p-4 pb-8 sm:pb-4 bg-white border-t border-stone-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 shrink-0">
-                <button 
-                    onClick={handleBook}
-                    disabled={!agreeTerms || isProcessingPayment}
-                    className={`w-full bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center ${(!agreeTerms || isProcessingPayment) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-500'}`}
-                >
-                    {isProcessingPayment ? (
-                        <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                        </>
-                    ) : `Pay ₱${total.toLocaleString()} & Book`}
-                </button>
-            </div>
-            </>
-        );
-    }
+                         <button onClick={handleBook} disabled={isProcessingPayment} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold flex items-center justify-center">
+                             {isProcessingPayment ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                  Processing...
+                                </>
+                             ) : 'Confirm Booking'}
+                         </button>
+                     </div>
+                 )}
+             </div>
+         );
+     }
   };
 
   return (
@@ -642,7 +581,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
 
         {viewMode === 'list' ? (
           <div className="space-y-8 animate-fade-in">
-            {/* Suggested For You */}
+            {/* Suggested For You - Only show if no search query */}
             {suggestedListings.length > 0 && selectedCategory === 'All' && !searchQuery && (
                 <div>
                    <h2 className="text-lg font-bold text-stone-800 mb-4 flex items-center">
@@ -659,85 +598,154 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                 </div>
             )}
 
-            {/* Campaign Banner */}
-            <div onClick={() => handleProtectedAction()} className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden cursor-pointer active:scale-95 transition-transform">
-              <div className="relative z-10">
-                <span className="bg-white/20 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Featured Campaign</span>
-                <h2 className="font-bold text-xl mt-2">Tara sa Bukidnon! 🏔️</h2>
-                <p className="text-sm mt-1 mb-4 opacity-90">Experience the highlands of Northern Mindanao. Get 20% off on stays.</p>
-                <button className="bg-white text-emerald-700 font-bold text-xs px-4 py-2.5 rounded-full shadow-sm hover:bg-stone-100 transition-colors">
-                  View Offers
-                </button>
-              </div>
-              <div className="absolute right-0 bottom-0 opacity-20">
-                 <Icon className="w-32 h-32"><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></Icon>
-              </div>
-            </div>
+            {/* Campaign Banner - Only show if no search query */}
+            {!searchQuery && (
+                <div onClick={() => handleProtectedAction()} className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                <div className="relative z-10">
+                    <span className="bg-white/20 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Featured Campaign</span>
+                    <h2 className="font-bold text-xl mt-2">Tara sa Bukidnon! 🏔️</h2>
+                    <p className="text-sm mt-1 mb-4 opacity-90">Experience the highlands of Northern Mindanao. Get 20% off on stays.</p>
+                    <button className="bg-white text-emerald-700 font-bold text-xs px-4 py-2.5 rounded-full shadow-sm hover:bg-stone-100 transition-colors">
+                    View Offers
+                    </button>
+                </div>
+                <div className="absolute right-0 bottom-0 opacity-20">
+                    <Icon className="w-32 h-32"><path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></Icon>
+                </div>
+                </div>
+            )}
 
-            {/* Trending Now */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-stone-800 flex items-center">
-                    <Icon className="w-5 h-5 text-orange-500 mr-2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12 17 12" /></Icon>
-                    Trending Now
-                </h2>
-                <button className="text-xs font-bold text-emerald-600">See All</button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredListings.filter(l => l.isTrending).map(listing => (
-                  <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="flex bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
-                    <img src={listing.imageUrl} alt={listing.title} className="w-24 h-24 object-cover" />
-                    <div className="p-3 flex-1 flex flex-col justify-center">
-                      <h3 className="font-bold text-stone-800 text-sm mb-1">{listing.title}</h3>
-                      <p className="text-xs text-stone-500 mb-2">{listing.location}</p>
-                      <div className="flex justify-between items-center">
-                          <span className="text-emerald-600 font-bold text-sm">₱{listing.price}</span>
-                          <div className="flex items-center text-[10px] text-stone-400">
-                             <span className="text-yellow-400 mr-1">★</span> {listing.rating}
-                          </div>
-                      </div>
+            {/* Trending Now - Only show if no search query */}
+            {!searchQuery && selectedCategory === 'All' && (
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold text-stone-800 flex items-center">
+                            <Icon className="w-5 h-5 text-orange-500 mr-2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12 17 12" /></Icon>
+                            Trending Now
+                        </h2>
+                        <button className="text-xs font-bold text-emerald-600">See All</button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {mockListings.filter(l => l.isTrending).map(listing => (
+                        <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="flex bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                            <img src={listing.imageUrl} alt={listing.title} className="w-24 h-24 object-cover" />
+                            <div className="p-3 flex-1 flex flex-col justify-center">
+                            <h3 className="font-bold text-stone-800 text-sm mb-1">{listing.title}</h3>
+                            <p className="text-xs text-stone-500 mb-2">{listing.location}</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-emerald-600 font-bold text-sm">₱{listing.price}</span>
+                                <div className="flex items-center text-[10px] text-stone-400">
+                                    <span className="text-yellow-400 mr-1">★</span> {listing.rating}
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-            {/* All Listings */}
-            <div>
-               <h2 className="text-lg font-bold text-stone-800 mb-4">All Adventures</h2>
-               <div className="space-y-4">
-                  {filteredListings.map(listing => (
-                      <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
-                          <div className="h-40 relative">
-                              <img src={listing.imageUrl} className="w-full h-full object-cover" />
-                              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold shadow-sm">
-                                  {listing.category}
-                              </div>
-                          </div>
-                          <div className="p-4">
-                              <div className="flex justify-between items-start mb-2">
-                                  <div>
-                                      <h3 className="font-bold text-lg text-stone-800">{listing.title}</h3>
-                                      <p className="text-stone-500 text-xs flex items-center mt-1">
-                                          <Icon className="w-3 h-3 mr-1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
-                                          {listing.location}
-                                      </p>
+            {/* Discover Rural / All Listings Section */}
+            <div className="mt-8">
+               {!isDiscovering ? (
+                   <div className="flex flex-col items-center justify-center space-y-4 py-8">
+                       <button 
+                           onClick={handleDiscoverClick}
+                           className="group relative w-full overflow-hidden rounded-2xl shadow-lg transition-transform active:scale-95"
+                       >
+                           <div className="absolute inset-0 bg-stone-900 group-hover:scale-105 transition-transform duration-700">
+                                <img src="https://images.unsplash.com/photo-1518182170546-0766ba6f9285?auto=format&fit=crop&w=800" className="w-full h-full object-cover opacity-50" />
+                           </div>
+                           <div className="relative p-8 text-center">
+                               <h2 className="text-3xl font-black text-white mb-2 italic tracking-tighter">Discover Rural</h2>
+                               <p className="text-stone-200 text-sm font-medium mb-4">Explore hidden gems and sponsored adventures</p>
+                               <span className="inline-flex items-center bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold text-sm group-hover:bg-emerald-500 transition-colors">
+                                   Start Browsing <Icon className="w-4 h-4 ml-2"><path d="M5 12h14M12 5l7 7-7 7"/></Icon>
+                               </span>
+                           </div>
+                       </button>
+                   </div>
+               ) : (
+                   <div className="animate-fade-in">
+                       <div className="flex justify-between items-center mb-6">
+                           <h2 className="text-xl font-bold text-stone-800">
+                               {selectedCategory === 'All' ? 'Discovering Rural' : selectedCategory}
+                           </h2>
+                           <button onClick={() => setIsDiscovering(false)} className="text-xs font-bold text-stone-500 hover:text-stone-800">Close View</button>
+                       </div>
+                       
+                       <div className="space-y-6">
+                          {visibleListings.slice(0, displayLimit).map(listing => (
+                              <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform relative group">
+                                  <div className="h-48 relative">
+                                      <img src={listing.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                      
+                                      <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                          {listing.category}
+                                      </div>
+                                      
+                                      {listing.sponsorshipTier && (
+                                          <div className="absolute top-3 left-3 bg-emerald-600 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center">
+                                              {listing.sponsorshipTier === 'Major' ? 'Featured' : 'Sponsored'}
+                                          </div>
+                                      )}
+
+                                      <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                                          <div>
+                                              <h3 className="font-bold text-lg text-white leading-tight">{listing.title}</h3>
+                                              <p className="text-stone-200 text-xs flex items-center mt-0.5">
+                                                  <Icon className="w-3 h-3 mr-1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
+                                                  {listing.location}
+                                              </p>
+                                          </div>
+                                          <div className="bg-white/90 backdrop-blur text-stone-800 px-2 py-1 rounded-lg text-xs font-bold">
+                                              ₱{listing.price}
+                                          </div>
+                                      </div>
                                   </div>
-                                  <div className="flex flex-col items-end">
-                                      <span className="font-bold text-emerald-700 text-lg">₱{listing.price}</span>
-                                      <div className="flex items-center text-xs text-stone-500">
-                                          <Icon className="w-3 h-3 text-yellow-400 fill-current mr-1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></Icon>
-                                          {listing.rating} ({listing.reviews})
+                                  <div className="p-4">
+                                      <p className="text-sm text-stone-600 line-clamp-2 leading-relaxed mb-3">
+                                          {listing.description || `Discover the beauty of ${listing.location}. A perfect getaway for ${listing.category} lovers.`}
+                                      </p>
+                                      <div className="flex justify-between items-center border-t border-stone-100 pt-3">
+                                          <div className="flex items-center text-xs text-stone-500">
+                                              <Icon className="w-3 h-3 text-yellow-400 fill-current mr-1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></Icon>
+                                              <span className="font-bold text-stone-700 mr-1">{listing.rating}</span> 
+                                              ({listing.reviews} reviews)
+                                          </div>
+                                          <span className="text-xs font-bold text-emerald-600">View Details</span>
                                       </div>
                                   </div>
                               </div>
-                              <p className="text-sm text-stone-600 line-clamp-2 leading-relaxed">
-                                  {listing.description || `Discover the beauty of ${listing.location}. A perfect getaway for ${listing.category} lovers.`}
-                              </p>
-                          </div>
-                      </div>
-                  ))}
-               </div>
+                          ))}
+                       </div>
+
+                       <div className="mt-8 flex flex-col items-center space-y-4 pb-8">
+                           {displayLimit < visibleListings.length ? (
+                               <div className="flex flex-col items-center w-full">
+                                   <p className="text-xs text-stone-400 mb-2">Showing {Math.min(displayLimit, visibleListings.length)} of {visibleListings.length}</p>
+                                   <button 
+                                       onClick={handleShowMore} 
+                                       className="w-full py-3 bg-white border border-stone-200 text-stone-600 font-bold rounded-xl shadow-sm hover:bg-stone-50 active:scale-95 transition-transform"
+                                   >
+                                       Show More Listings
+                                   </button>
+                               </div>
+                           ) : (
+                               <p className="text-stone-400 text-sm font-medium">You've reached the end!</p>
+                           )}
+                           
+                           <button 
+                               onClick={handleGoTop}
+                               className="flex items-center text-stone-400 hover:text-emerald-600 text-sm font-bold transition-colors"
+                           >
+                               <Icon className="w-4 h-4 mr-1"><path d="M12 19V5M5 12l7-7 7 7"/></Icon>
+                               Go Top
+                           </button>
+                       </div>
+                   </div>
+               )}
             </div>
 
           </div>

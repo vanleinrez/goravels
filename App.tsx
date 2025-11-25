@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import BottomNav from './components/BottomNav';
 import DiscoverScreen from './screens/DiscoverScreen';
 import PlannerScreen from './screens/PlannerScreen';
-import SosScreen from './screens/SosScreen';
+import ActivityScreen from './screens/ActivityScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import { 
@@ -16,10 +16,10 @@ import {
 } from './screens/Onboarding';
 import HostRegistrationScreen from './screens/HostRegistration';
 import HostDashboardScreen from './screens/HostDashboardScreen';
-import { mockUser } from './constants';
-import type { User } from './types';
+import { mockUser, mockListings, mockTrips } from './constants';
+import type { User, Trip, Notification } from './types';
 
-export type Screen = 'Explore' | 'Planner' | 'SOS' | 'Connect' | 'Profile';
+export type Screen = 'Explore' | 'Planner' | 'Connect' | 'Profile';
 export type AuthStep = 
   | 'splash' 
   | 'welcome' 
@@ -42,6 +42,29 @@ const App: React.FC = () => {
   
   // New state to track ongoing activity
   const [isTripActive, setIsTripActive] = useState(false);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
+  
+  // New State for Global SOS
+  const [isSosActive, setIsSosActive] = useState(false);
+
+  // Global Data State
+  const [myTrips, setMyTrips] = useState<Trip[]>(mockTrips);
+  const [notifications, setNotifications] = useState<Notification[]>([
+    { id: 'n1', type: 'general', title: 'Welcome!', message: 'Start your adventure with Gora.', time: 'Just now', read: false },
+    { id: 'n2', type: 'voucher', title: 'Gift Voucher', message: 'You received a 10% discount on your first booking!', time: '1h ago', read: false }
+  ]);
+
+  const handleAddTrip = (trip: Trip) => {
+    setMyTrips(prev => [trip, ...prev]);
+  };
+
+  const handleAddNotification = (notif: Notification) => {
+    setNotifications(prev => [notif, ...prev]);
+  };
+
+  const handleMarkRead = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   // Simulate Splash Screen timer
   useEffect(() => {
@@ -114,6 +137,11 @@ const App: React.FC = () => {
 
   const toggleTripStatus = () => setIsTripActive(!isTripActive);
 
+  // Toggle Activity Overlay
+  const handleGoClick = () => {
+      setIsActivityOpen(true);
+  };
+
   const renderContent = () => {
     switch (authStep) {
       case 'splash':
@@ -173,25 +201,31 @@ const App: React.FC = () => {
       case 'app':
         return (
           <>
-            <main className="flex-1 overflow-y-auto pb-20 scrollbar-hide bg-stone-50">
+            <main className="flex-1 overflow-y-auto pb-20 scrollbar-hide bg-stone-50 relative">
+              {/* Activity Overlay Screen */}
+              {isActivityOpen && (
+                <ActivityScreen 
+                    activeTrip={mockListings[0]} 
+                    onClose={() => setIsActivityOpen(false)} 
+                    isSosActive={isSosActive}
+                    onSosStateChange={setIsSosActive}
+                />
+              )}
+
               {activeScreen === 'Explore' && (
                 <DiscoverScreen 
                   user={currentUser} 
                   onRegister={triggerRegistration} 
+                  onAddTrip={handleAddTrip}
+                  onAddNotification={handleAddNotification}
                 />
               )}
               {activeScreen === 'Planner' && (
                 <PlannerScreen 
                   isTripActive={isTripActive} 
-                  onToggleTrip={toggleTripStatus} 
-                />
-              )}
-              {activeScreen === 'SOS' && (
-                <SosScreen 
-                  onComplete={() => {
-                    setIsTripActive(false); 
-                    setActiveScreen('Explore');
-                  }} 
+                  onToggleTrip={toggleTripStatus}
+                  myTrips={myTrips}
+                  onAddTrip={handleAddTrip}
                 />
               )}
               {activeScreen === 'Connect' && <ConnectScreen />}
@@ -200,6 +234,8 @@ const App: React.FC = () => {
                   user={currentUser} 
                   onLogout={handleLogout}
                   onSwitchToHost={handleSwitchToHost}
+                  notifications={notifications}
+                  onMarkRead={handleMarkRead}
                 />
               )}
             </main>
@@ -207,6 +243,8 @@ const App: React.FC = () => {
               activeScreen={activeScreen} 
               setActiveScreen={setActiveScreen} 
               isTripActive={isTripActive}
+              isSosActive={isSosActive}
+              onGoClick={handleGoClick}
             />
           </>
         );
