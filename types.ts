@@ -44,7 +44,7 @@ export interface User {
   email?: string;
   phone?: string;
   avatarUrl: string;
-  tier: 'Nomad' | 'Explorer' | 'Legend' | 'Guest'; // Keeping legacy tier for compatibility
+  tier: 'Nomad' | 'Explorer' | 'Legend' | 'Guest';
   level: UserLevel;
   currentStatus: UserStatus;
   stamps: number;
@@ -69,14 +69,13 @@ export interface Listing {
   reviews: number;
   price: number;
   imageUrl: string;
-  images?: string[]; // Multiple images for carousel
+  images?: string[];
   category: ListingCategory;
   lat: number;
   lng: number;
   isTrending?: boolean;
   isNew?: boolean;
-  sponsorshipTier?: 'Major' | 'Minor'; // New field for paid boosting
-  // Extended Details
+  sponsorshipTier?: 'Major' | 'Minor';
   description?: string;
   howToGetThere?: string;
   inclusions?: string[];
@@ -96,8 +95,6 @@ export interface Listing {
   itinerary?: { time: string; activity: string }[];
   refundPolicy?: string;
   priceBreakdown?: { item: string; amount: number }[];
-  
-  // Specific Capacity Metrics
   capacity?: {
     type: 'Room Size' | 'Capacity' | 'Group Size' | 'Slots' | 'Seats';
     value: string | number;
@@ -109,7 +106,7 @@ export interface SafetyZone {
   id: string;
   lat: number;
   lng: number;
-  radius: number; // in meters
+  radius: number;
   type: 'Landslide' | 'Flash Flood' | 'Volcanic';
   description: string;
 }
@@ -133,7 +130,7 @@ export interface Notification {
   message: string;
   time: string;
   read: boolean;
-  data?: any; // For linking to specific trips or vouchers
+  data?: any;
 }
 
 export interface Traveler {
@@ -152,6 +149,36 @@ export interface Traveler {
 export interface PaymentMethod {
     id: string;
     name: string;
-    icon: string; // URL or icon name
+    icon: string;
     feePercentage: number;
+}
+
+// --- NEW TYPES FOR GROUP PLANNER ---
+
+export interface GroupMember {
+  id: string;
+  name: string;
+  avatar: string;
+  role: 'Admin' | 'Member' | 'AI';
+  isOnline: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: string;
+  type: 'text' | 'budget_plan' | 'alert';
+  data?: {
+      total?: number;
+      perPerson?: number;
+      breakdown?: { item: string; cost: number }[];
+  };
+}
+
+export interface PlannerChannel {
+    id: string;
+    name: string;
+    type: 'text' | 'voice';
+    unreadCount: number;
 }
