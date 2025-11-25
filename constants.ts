@@ -71,49 +71,85 @@ export const mockUser: User = {
   badges: [mockBadges[0], mockBadges[1]]
 };
 
+const commonDetails = {
+    description: "Immerse yourself in the breathtaking landscapes and rich culture of Northern Mindanao. This experience is curated to provide a balance of adventure and relaxation.",
+    howToGetThere: "From Cagayan de Oro City, take a van or bus from Agora Terminal heading towards Bukidnon. Travel time is approximately 1.5 - 2 hours. Alight at the town proper where our shuttle will pick you up.",
+    inclusions: ["Entrance Fees", "Local Guide", "Environmental Fee", "Welcome Drink", "Shuttle Service from Town"],
+    rules: [
+        { title: "Respect Local Culture", text: "Ask permission before taking photos of indigenous people.", icon: "📸" },
+        { title: "Leave No Trace", text: "Bring your trash back with you. No littering allowed.", icon: "🌱" },
+        { title: "Safety First", text: "Follow the guide's instructions at all times.", icon: "⛑️" }
+    ],
+    host: {
+        name: "Kuya Ben",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=200&h=200",
+        role: "Certified Local Guide",
+        bio: "I've been guiding travelers in Bukidnon for over 10 years. I love sharing stories about our ancestral lands."
+    },
+    itinerary: [
+        { time: "08:00 AM", activity: "Meet up at Town Plaza" },
+        { time: "09:00 AM", activity: "Arrival at Site & Welcome Briefing" },
+        { time: "09:30 AM", activity: "Start of Activity" },
+        { time: "12:00 PM", activity: "Local Lunch (Optional add-on)" },
+        { time: "02:00 PM", activity: "Free Time / Photo Op" },
+        { time: "04:00 PM", activity: "Return to Town Proper" }
+    ],
+    refundPolicy: "Full refund if cancelled 48 hours before the trip. 50% refund if cancelled 24 hours before. No refund for same-day cancellation.",
+};
+
 export const mockListings: Listing[] = [
   // BUKIDNON
   {
     id: '1', title: 'Dahilayan Adventure Park', location: 'Manolo Fortich, Bukidnon',
     rating: 4.8, reviews: 342, price: 1500, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1533234962703-2312c8742a8b?auto=format&fit=crop&w=800',
-    lat: 8.219, lng: 124.877, isTrending: true
+    lat: 8.219, lng: 124.877, isTrending: true,
+    ...commonDetails,
+    priceBreakdown: [{ item: "Park Entrance", amount: 500 }, { item: "Zipline Ride", amount: 700 }, { item: "Guide & Gear", amount: 300 }]
   },
   {
     id: '2', title: 'Mt. Kitanglad Range Trek', location: 'Impasug-ong, Bukidnon',
     rating: 4.9, reviews: 89, price: 3500, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800',
-    lat: 8.132, lng: 124.918, isTrending: true
+    lat: 8.132, lng: 124.918, isTrending: true,
+    ...commonDetails,
+    priceBreakdown: [{ item: "Permit Fee", amount: 1000 }, { item: "Guide Fee (2 Days)", amount: 2000 }, { item: "Porter (10kg)", amount: 500 }]
   },
   {
     id: '3', title: 'Kampo Juan', location: 'Manolo Fortich, Bukidnon',
     rating: 4.6, reviews: 120, price: 800, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1595964267468-d731885f8386?auto=format&fit=crop&w=800',
-    lat: 8.358, lng: 124.821
+    lat: 8.358, lng: 124.821,
+    ...commonDetails
   },
   {
     id: '4', title: 'Monastery of Transfiguration', location: 'Malaybalay, Bukidnon',
     rating: 4.9, reviews: 450, price: 0, category: 'Immersions',
     imageUrl: 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800',
-    lat: 8.114, lng: 125.127
+    lat: 8.114, lng: 125.127,
+    ...commonDetails,
+    priceBreakdown: [{ item: "Donation (Optional)", amount: 0 }]
   },
   {
     id: '5', title: 'Kaamulan Festival', location: 'Malaybalay, Bukidnon',
     rating: 5.0, reviews: 1200, price: 500, category: 'Events',
     imageUrl: 'https://images.unsplash.com/photo-1589985236891-5cb317867dc8?auto=format&fit=crop&w=800',
-    lat: 8.155, lng: 125.132, isTrending: true
+    lat: 8.155, lng: 125.132, isTrending: true,
+    ...commonDetails
   },
   {
     id: '6', title: 'Rotyponds Ridge', location: 'Impasug-ong, Bukidnon',
     rating: 4.7, reviews: 67, price: 1200, category: 'Riders',
     imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800',
-    lat: 8.356, lng: 125.021, isNew: true
+    lat: 8.356, lng: 125.021, isNew: true,
+    ...commonDetails
   },
   {
     id: '7', title: 'Communal Ranch', location: 'Impasug-ong, Bukidnon',
     rating: 4.8, reviews: 210, price: 300, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1516934024742-b461fba47600?auto=format&fit=crop&w=800',
-    lat: 8.283, lng: 125.067
+    lat: 8.283, lng: 125.067,
+    ...commonDetails
   },
 
   // MISAMIS ORIENTAL
@@ -121,37 +157,43 @@ export const mockListings: Listing[] = [
     id: '8', title: 'Seven Seas Waterpark', location: 'Opol, Misamis Oriental',
     rating: 4.7, reviews: 890, price: 1000, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1572331165267-854da2b00dc3?auto=format&fit=crop&w=800',
-    lat: 8.514, lng: 124.597, isTrending: true
+    lat: 8.514, lng: 124.597, isTrending: true,
+    ...commonDetails
   },
   {
     id: '9', title: 'Claveria View Deck', location: 'Claveria, Misamis Oriental',
     rating: 4.6, reviews: 340, price: 100, category: 'Riders',
     imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800',
-    lat: 8.650, lng: 124.917
+    lat: 8.650, lng: 124.917,
+    ...commonDetails
   },
   {
     id: '10', title: 'Amaya View', location: 'Cagayan de Oro',
     rating: 4.8, reviews: 560, price: 1500, category: 'Eats',
     imageUrl: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=800',
-    lat: 8.423, lng: 124.662
+    lat: 8.423, lng: 124.662,
+    ...commonDetails
   },
   {
     id: '11', title: 'Duka Bay Resort', location: 'Medina, Misamis Oriental',
     rating: 4.5, reviews: 120, price: 2500, category: 'Stays',
     imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800',
-    lat: 8.917, lng: 125.033
+    lat: 8.917, lng: 125.033,
+    ...commonDetails
   },
   {
     id: '12', title: 'Mangrove Planting', location: 'Opol, Misamis Oriental',
     rating: 4.9, reviews: 45, price: 0, category: 'Voluntourism',
     imageUrl: 'https://images.unsplash.com/photo-1464582883107-8adf2dca8a9f?auto=format&fit=crop&w=800',
-    lat: 8.520, lng: 124.580, isNew: true
+    lat: 8.520, lng: 124.580, isNew: true,
+    ...commonDetails
   },
   {
     id: '13', title: 'Lasang Secret Adventure', location: 'Initao, Misamis Oriental',
     rating: 4.4, reviews: 88, price: 500, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800',
-    lat: 8.490, lng: 124.310
+    lat: 8.490, lng: 124.310,
+    ...commonDetails
   },
 
   // LANAO DEL NORTE
@@ -159,19 +201,22 @@ export const mockListings: Listing[] = [
     id: '14', title: 'Tinago Falls', location: 'Iligan City, Lanao Del Norte',
     rating: 4.9, reviews: 670, price: 100, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800',
-    lat: 8.158, lng: 124.187, isTrending: true
+    lat: 8.158, lng: 124.187, isTrending: true,
+    ...commonDetails
   },
   {
     id: '15', title: 'Maria Cristina Falls', location: 'Iligan City, Lanao Del Norte',
     rating: 4.8, reviews: 540, price: 100, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1533423797697-39d671295e26?auto=format&fit=crop&w=800',
-    lat: 8.183, lng: 124.192
+    lat: 8.183, lng: 124.192,
+    ...commonDetails
   },
   {
     id: '16', title: 'School Supply Drive', location: 'Munai, Lanao Del Norte',
     rating: 5.0, reviews: 12, price: 0, category: 'For a cause',
     imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800',
-    lat: 7.980, lng: 124.050, isNew: true
+    lat: 7.980, lng: 124.050, isNew: true,
+    ...commonDetails
   },
 
   // MISAMIS OCCIDENTAL
@@ -179,25 +224,29 @@ export const mockListings: Listing[] = [
     id: '17', title: 'Hoyohoy Highland Chapel', location: 'Tangub City, Misamis Occ.',
     rating: 4.6, reviews: 90, price: 200, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=800',
-    lat: 8.080, lng: 123.750
+    lat: 8.080, lng: 123.750,
+    ...commonDetails
   },
   {
     id: '18', title: 'Cotta Fort', location: 'Ozamiz City, Misamis Occ.',
     rating: 4.5, reviews: 230, price: 50, category: 'Immersions',
     imageUrl: 'https://images.unsplash.com/photo-1599592237996-2679dc651475?auto=format&fit=crop&w=800',
-    lat: 8.140, lng: 123.840
+    lat: 8.140, lng: 123.840,
+    ...commonDetails
   },
   {
     id: '19', title: 'Lake Duminagat', location: 'Don Victoriano, Misamis Occ.',
     rating: 4.8, reviews: 30, price: 1000, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1439853949127-fa647821eba0?auto=format&fit=crop&w=800',
-    lat: 8.283, lng: 123.633, isNew: true
+    lat: 8.283, lng: 123.633, isNew: true,
+    ...commonDetails
   },
   {
     id: '20', title: 'MisOcc Aquamarine Park', location: 'Sinacaban, Misamis Occ.',
     rating: 4.3, reviews: 150, price: 300, category: 'Stays',
     imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800',
-    lat: 8.280, lng: 123.800
+    lat: 8.280, lng: 123.800,
+    ...commonDetails
   },
 ];
 

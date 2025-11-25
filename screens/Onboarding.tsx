@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Icon from '../components/Icon';
 import { AuthStep } from '../App';
@@ -243,6 +242,7 @@ export const MobileEntryScreen: React.FC<{ onBack: () => void; onNext: () => voi
           onChange={(e) => setMobile(e.target.value)}
           placeholder="900 000 0000"
           className="flex-1 p-4 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none text-lg tracking-wide font-medium"
+          inputMode="numeric"
         />
       </div>
 
@@ -269,12 +269,47 @@ export const OTPScreen: React.FC<{
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
-    if (isNaN(Number(element.value))) return false;
+    const value = element.value;
+    if (isNaN(Number(value))) return false;
 
-    setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
+    const newOtp = [...otp];
+    // Take the last character if user types quickly or autocomplete fills multiple chars
+    newOtp[index] = value.substring(value.length - 1);
+    setOtp(newOtp);
 
-    if (element.nextSibling && element.value !== "") {
-      (element.nextSibling as HTMLElement).focus();
+    // Focus next input
+    if (value && index < 5) {
+      const next = document.getElementById(`otp-${index + 1}`);
+      next?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    // If Backspace pressed on empty field, go to previous
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      e.preventDefault();
+      const prev = document.getElementById(`otp-${index - 1}`);
+      if (prev) {
+          prev.focus();
+          // Optional: we can clear the previous value here if desired, but focus is usually enough
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6).split('');
+    
+    if (pastedData.length > 0) {
+        const newOtp = [...otp];
+        pastedData.forEach((val, i) => {
+            newOtp[i] = val;
+        });
+        setOtp(newOtp);
+        
+        // Focus the input after the last pasted character
+        const nextIndex = Math.min(pastedData.length, 5);
+        document.getElementById(`otp-${nextIndex}`)?.focus();
     }
   };
 
@@ -289,16 +324,21 @@ export const OTPScreen: React.FC<{
       <h2 className="text-3xl font-bold text-stone-800 mb-2">Enter the code</h2>
       <p className="text-stone-500 mb-8">Sent to +63 9** *** ****</p>
 
-      <div className="flex justify-between mb-8">
+      <div className="flex justify-between mb-8 gap-2">
         {otp.map((data, index) => (
           <input
-            className="w-12 h-14 border border-stone-300 rounded-xl text-center text-xl font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
-            type="text"
-            name="otp"
+            id={`otp-${index}`}
+            className="w-12 h-14 border border-stone-300 rounded-xl text-center text-xl font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none bg-white caret-emerald-600"
+            type="tel"
+            inputMode="numeric"
+            pattern="\d*"
+            autoComplete="one-time-code"
             maxLength={1}
             key={index}
             value={data}
             onChange={(e) => handleChange(e.target, index)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            onPaste={handlePaste}
             onFocus={(e) => e.target.select()}
           />
         ))}

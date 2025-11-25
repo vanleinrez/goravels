@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import type { Listing, SafetyZone } from '../types';
 
@@ -10,6 +9,7 @@ export interface MapViewHandle {
   zoomOut: () => void;
   centerOnUser: () => void;
   flyTo: (lat: number, lng: number) => void;
+  panBy: (x: number, y: number) => void;
 }
 
 export type MapLayerType = 'standard' | 'satellite' | 'hybrid' | 'terrain';
@@ -68,6 +68,11 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({
            animate: true,
            duration: 1.5
         });
+      }
+    },
+    panBy: (x: number, y: number) => {
+      if (mapRef.current) {
+        mapRef.current.panBy([x, y], { animate: true });
       }
     }
   }));
@@ -140,22 +145,49 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({
 
     // Draw Route (Navigation)
     if (route) {
-        const latlngs = [
-            [route.from.lat, route.from.lng],
-            [route.to.lat, route.to.lng]
-        ];
-        
-        // Dashed line to simulate route
-        routeLayerRef.current = L.polyline(latlngs, {
-            color: '#3b82f6', // Blue for navigation
-            weight: 6,
-            opacity: 0.8,
-            dashArray: '10, 10',
-            lineJoin: 'round'
-        }).addTo(mapRef.current);
+        // Fetch route from OSRM
+        const fetchRoute = async () => {
+             const routerUrl = `https://router.project-osrm.org/route/v1/driving/${route.from.lng},${route.from.lat};${route.to.lng},${route.to.lat}?overview=full&geometries=geojson`;
 
-        // Fit bounds to show the whole route
-        mapRef.current.fitBounds(L.latLngBounds(latlngs).pad(0.2));
+             try {
+                const response = await fetch(routerUrl);
+                const data = await response.json();
+
+                if (data.code === 'Ok' && data.routes?.[0]) {
+                    const coordinates = data.routes[0].geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]); // Swap to Lat, Lng
+
+                    // Draw the polyline
+                    routeLayerRef.current = L.polyline(coordinates, {
+                        color: '#3b82f6',
+                        weight: 6,
+                        opacity: 0.8,
+                        lineJoin: 'round'
+                    }).addTo(mapRef.current);
+
+                    // Fit bounds to route
+                    mapRef.current.fitBounds(L.latLngBounds(coordinates).pad(0.2));
+                } else {
+                    throw new Error("No route found");
+                }
+             } catch (err) {
+                 console.warn("Routing failed, falling back to straight line:", err);
+                 // Fallback to straight line
+                 const latlngs = [
+                    [route.from.lat, route.from.lng],
+                    [route.to.lat, route.to.lng]
+                ];
+                routeLayerRef.current = L.polyline(latlngs, {
+                    color: '#3b82f6',
+                    weight: 6,
+                    dashArray: '10, 10',
+                    opacity: 0.8,
+                    lineJoin: 'round'
+                }).addTo(mapRef.current);
+                mapRef.current.fitBounds(L.latLngBounds(latlngs).pad(0.2));
+             }
+        };
+
+        fetchRoute();
 
         // Destination Marker
         const destIcon = L.divIcon({
@@ -271,7 +303,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(({
 
   }, [listings, safetyZones, radiusKm, pitch, bearing, userLocation, route, layerType]);
 
-  return <div ref={mapContainerRef} className="h-full w-full rounded-2xl overflow-hidden shadow-inner bg-stone-100" />;
+  return <div ref={mapContainerRef} className="h-full w-full rounded-2xl overflow-hidden shadow-inner bg-stone-100 touch-action-none" />;
 });
 
 export default MapView;

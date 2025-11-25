@@ -71,6 +71,20 @@ export interface Listing {
   lng: number;
   isTrending?: boolean;
   isNew?: boolean;
+  // Extended Details
+  description?: string;
+  howToGetThere?: string;
+  inclusions?: string[];
+  rules?: { title: string; text: string; icon?: string }[];
+  host?: {
+    name: string;
+    avatar: string;
+    role: string;
+    bio: string;
+  };
+  itinerary?: { time: string; activity: string }[];
+  refundPolicy?: string;
+  priceBreakdown?: { item: string; amount: number }[];
 }
 
 export interface SafetyZone {

@@ -12,6 +12,7 @@ interface DiscoverScreenProps {
 }
 
 type ViewMode = 'list' | 'map';
+type BookingStep = 'overview' | 'details' | 'payment';
 
 const CATEGORIES: { id: ListingCategory | 'All'; label: string; icon: string }[] = [
     { id: 'All', label: 'All', icon: '🌍' },
@@ -46,9 +47,14 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
 
   // Listing Details & Booking
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [bookingStep, setBookingStep] = useState<BookingStep>('overview');
   const [bookedListings, setBookedListings] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
+  // Payment Form
+  const [paymentMethod, setPaymentMethod] = useState('GCash');
+  const [agreeTerms, setAgreeTerms] = useState(false);
+
   // Map Controller Ref
   const mapRef = useRef<MapViewHandle>(null);
 
@@ -80,7 +86,6 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
       (error) => {
         console.error("Error retrieving location:", error);
         setIsLocating(false);
-        // Fallback or Alert could go here
       },
       {
         enableHighAccuracy: true,
@@ -90,13 +95,13 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
     );
   };
 
-  // Helper to intercept actions
   const handleProtectedAction = (listing?: Listing) => {
     if (user.tier === 'Guest') {
       onRegister();
     } else {
       if (listing) {
           setSelectedListing(listing);
+          setBookingStep('overview');
       }
     }
   };
@@ -108,23 +113,21 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
             setBookedListings(prev => [...prev, selectedListing.id]);
           }
           setIsProcessingPayment(false);
-      }, 1500);
+          setBookingStep('overview');
+          setSelectedListing(null);
+          alert("Booking Successful!");
+      }, 2000);
   };
 
   const handleGetDirection = () => {
       if (selectedListing) {
-          // Close modal
           setSelectedListing(null);
-          // Switch to map
           setViewMode('map');
-          // Set standard layer (street view) for navigation
           setMapLayer('standard');
-          // Set Route
           setNavigationRoute({
               from: userLocation,
               to: { lat: selectedListing.lat, lng: selectedListing.lng }
           });
-          // Auto Tilt for better Nav view
           setMapPitch(60);
           setMapBearing(0);
       }
@@ -139,10 +142,6 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
       setMapBearing(prev => prev + deg);
   };
 
-  const togglePitch = () => {
-      setMapPitch(prev => prev === 0 ? 45 : 0);
-  };
-
   const filteredListings = mockListings.filter(l => {
       const matchesCategory = selectedCategory === 'All' || l.category === selectedCategory;
       const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -150,7 +149,6 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
       return matchesCategory && matchesSearch;
   });
 
-  // Calculate filtered listings for map based on radius
   const mapListings = filteredListings.filter(l => {
       const R = 6371; // km
       const dLat = (l.lat - userLocation.lat) * Math.PI / 180;
@@ -185,36 +183,29 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
     </button>
   );
 
-  return (
-    <div className="bg-stone-50 min-h-full pb-20 relative">
-      
-      {/* --- LISTING DETAILS MODAL --- */}
-      {selectedListing && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
-            {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-black/50 pointer-events-auto backdrop-blur-sm"
-                onClick={() => setSelectedListing(null)}
-            ></div>
-            
-            {/* Modal Card */}
-            <div className="bg-white w-full sm:max-w-md max-h-[90vh] sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-y-auto pointer-events-auto relative animate-slide-in-right flex flex-col">
-                {/* Image Header */}
-                <div className="relative h-56 w-full flex-shrink-0">
-                    <img src={selectedListing.imageUrl} alt={selectedListing.title} className="w-full h-full object-cover" />
+  const renderModalContent = () => {
+    if (!selectedListing) return null;
+
+    // --- STEP 1: OVERVIEW ---
+    if (bookingStep === 'overview') {
+        return (
+            <>
+            <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+                <div className="relative h-56 w-full flex-shrink-0 group">
+                    <img src={selectedListing.imageUrl} alt={selectedListing.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <button 
                         onClick={() => setSelectedListing(null)}
-                        className="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/30"
+                        className="absolute top-4 right-4 bg-black/30 backdrop-blur-md p-2 rounded-full text-white hover:bg-black/50 transition-colors"
                     >
-                        <Icon className="w-6 h-6"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>
+                        <Icon className="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>
                     </button>
                     <div className="absolute bottom-4 left-4 flex space-x-2">
-                         <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">{selectedListing.category}</span>
-                         {selectedListing.isTrending && <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center"><Icon className="w-3 h-3 mr-1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></Icon> Trending</span>}
+                            <span className="bg-emerald-600/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">{selectedListing.category}</span>
+                            {selectedListing.isTrending && <span className="bg-orange-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center"><Icon className="w-3 h-3 mr-1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></Icon> Trending</span>}
                     </div>
                 </div>
 
-                <div className="p-6 pb-24">
+                <div className="p-6">
                     <div className="flex justify-between items-start mb-2">
                         <div>
                             <h2 className="text-2xl font-bold text-stone-800 leading-tight">{selectedListing.title}</h2>
@@ -236,78 +227,330 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
 
                     <h3 className="font-bold text-stone-800 mb-2">About</h3>
                     <p className="text-stone-600 text-sm leading-relaxed mb-6">
-                        Experience the authentic charm of {selectedListing.location}. 
-                        Perfect for travelers seeking {selectedListing.category.toLowerCase()}. 
-                        Immerse yourself in local culture, enjoy breathtaking views, and create unforgettable memories.
+                        {selectedListing.description || `Experience the authentic charm of ${selectedListing.location}. Perfect for travelers seeking ${selectedListing.category.toLowerCase()}. Immerse yourself in local culture, enjoy breathtaking views, and create unforgettable memories.`}
                     </p>
 
-                    {/* Mini Map Preview */}
-                    <div className="mb-6">
-                        <div className="flex justify-between items-center mb-2">
-                             <h3 className="font-bold text-stone-800">Location</h3>
-                        </div>
-                        <div className="h-32 w-full rounded-xl overflow-hidden relative bg-stone-100 border border-stone-200">
-                             {/* Static Map Image Simulation */}
-                             <div className="absolute inset-0 bg-emerald-50 flex items-center justify-center opacity-50">
-                                  <Icon className="w-12 h-12 text-emerald-200"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
-                             </div>
-                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                <Icon className="w-8 h-8 text-emerald-600 animate-bounce"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
-                             </div>
-                             <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-stone-500">
-                                 {selectedListing.lat.toFixed(4)}, {selectedListing.lng.toFixed(4)}
-                             </div>
-                        </div>
-                    </div>
-
-                    <div className="flex space-x-4 mb-4">
+                    <div className="flex space-x-4 mb-6">
                         <div className="flex-1 bg-stone-50 p-3 rounded-xl border border-stone-100 text-center">
                             <Icon className="w-6 h-6 mx-auto mb-1 text-emerald-600"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>
                             <p className="text-[10px] font-bold text-stone-500 uppercase">Duration</p>
                             <p className="font-bold text-stone-800 text-sm">Day Trip</p>
                         </div>
-                         <div className="flex-1 bg-stone-50 p-3 rounded-xl border border-stone-100 text-center">
+                        <div className="flex-1 bg-stone-50 p-3 rounded-xl border border-stone-100 text-center">
                             <Icon className="w-6 h-6 mx-auto mb-1 text-blue-600"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>
                             <p className="text-[10px] font-bold text-stone-500 uppercase">Group Size</p>
                             <p className="font-bold text-stone-800 text-sm">Up to 10</p>
                         </div>
                     </div>
 
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-bold text-stone-800">Location</h3>
+                        </div>
+                        <div className="h-32 w-full rounded-xl overflow-hidden relative bg-stone-100 border border-stone-200">
+                                <div className="absolute inset-0 bg-emerald-50 flex items-center justify-center opacity-50">
+                                    <Icon className="w-12 h-12 text-emerald-200"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
+                                </div>
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <Icon className="w-8 h-8 text-emerald-600 animate-bounce"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
+                                </div>
+                                <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-stone-500">
+                                    {selectedListing.lat.toFixed(4)}, {selectedListing.lng.toFixed(4)}
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer Overview */}
+            <div className="p-4 bg-white border-t border-stone-100 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                <div>
+                    <p className="text-stone-500 text-xs font-bold uppercase">Price</p>
+                    <p className="text-2xl font-bold text-emerald-700">₱{selectedListing.price}</p>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-stone-100 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                {bookedListings.includes(selectedListing.id) ? (
+                    <button 
+                        onClick={handleGetDirection}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all flex items-center"
+                    >
+                        <Icon className="w-5 h-5 mr-2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></Icon>
+                        Get Direction
+                    </button>
+                ) : (
+                    <button 
+                        onClick={() => setBookingStep('details')}
+                        className="bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center hover:bg-stone-800"
+                    >
+                        Book Now
+                    </button>
+                )}
+            </div>
+            </>
+        );
+    }
+
+    // --- STEP 2: DETAILS (Trip Info) ---
+    if (bookingStep === 'details') {
+        return (
+            <>
+            <div className="bg-white px-4 py-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm">
+                <button onClick={() => setBookingStep('overview')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
+                    <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
+                </button>
+                <h2 className="ml-2 font-bold text-stone-800">Trip Details</h2>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-stone-50/50">
+                
+                {/* Host Info */}
+                {selectedListing.host && (
+                    <div className="flex items-start space-x-4 bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
+                        <img src={selectedListing.host.avatar} className="w-14 h-14 rounded-full object-cover border-2 border-emerald-100 shadow-sm" alt={selectedListing.host.name} />
+                        <div>
+                            <p className="text-xs font-bold text-stone-400 uppercase">Hosted by</p>
+                            <h3 className="font-bold text-stone-800">{selectedListing.host.name}</h3>
+                            <p className="text-xs text-emerald-600 font-bold mb-1">{selectedListing.host.role}</p>
+                            <p className="text-xs text-stone-500 leading-snug">"{selectedListing.host.bio}"</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Description - Repeated for detail context */}
+                <div>
+                     <h3 className="font-bold text-stone-800 mb-2">About This Experience</h3>
+                     <p className="text-sm text-stone-600 leading-relaxed">
+                        {selectedListing.description}
+                     </p>
+                </div>
+
+                {/* How to get there */}
+                <div>
+                    <h3 className="font-bold text-stone-800 mb-2 flex items-center">
+                        <Icon className="w-5 h-5 mr-2 text-blue-500"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></Icon>
+                        How to Get There
+                    </h3>
+                    <p className="text-sm text-stone-600 leading-relaxed bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        {selectedListing.howToGetThere || "Instructions available upon booking."}
+                    </p>
+                </div>
+
+                {/* Itinerary */}
+                {selectedListing.itinerary && (
                     <div>
-                        <p className="text-stone-500 text-xs font-bold uppercase">Price</p>
-                        <p className="text-2xl font-bold text-emerald-700">₱{selectedListing.price}</p>
+                        <h3 className="font-bold text-stone-800 mb-4 flex items-center">
+                            <Icon className="w-5 h-5 mr-2 text-orange-500"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>
+                            Itinerary
+                        </h3>
+                        <div className="space-y-0 border-l-2 border-stone-200 ml-2.5">
+                            {selectedListing.itinerary.map((item, idx) => (
+                                <div key={idx} className="relative pl-6 pb-6 last:pb-0">
+                                    <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-stone-300 border-2 border-white ring-2 ring-stone-100"></div>
+                                    <p className="text-xs font-bold text-stone-400 mb-0.5">{item.time}</p>
+                                    <p className="text-sm font-medium text-stone-800">{item.activity}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Inclusions & Rules */}
+                <div className="grid grid-cols-1 gap-6">
+                    <div>
+                        <h3 className="font-bold text-stone-800 mb-3">Inclusions</h3>
+                        <div className="bg-white rounded-xl border border-stone-100 p-4">
+                            <ul className="space-y-3">
+                                {selectedListing.inclusions?.map((inc, i) => (
+                                    <li key={i} className="flex items-center text-sm text-stone-600">
+                                        <Icon className="w-4 h-4 mr-2 text-emerald-500"><polyline points="20 6 9 17 4 12"/></Icon>
+                                        {inc}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
 
-                    {bookedListings.includes(selectedListing.id) ? (
-                        <button 
-                            onClick={handleGetDirection}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all flex items-center"
-                        >
-                            <Icon className="w-5 h-5 mr-2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></Icon>
-                            Get Direction
-                        </button>
-                    ) : (
-                        <button 
-                            onClick={handleBook}
-                            disabled={isProcessingPayment}
-                            className={`bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center ${isProcessingPayment ? 'opacity-80 cursor-wait' : ''}`}
-                        >
-                            {isProcessingPayment ? (
-                                <>
-                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                 </svg>
-                                 Processing...
-                                </>
-                            ) : 'Book Now'}
-                        </button>
-                    )}
+                    <div>
+                        <h3 className="font-bold text-stone-800 mb-3">Community Rules</h3>
+                        <div className="space-y-2">
+                             {selectedListing.rules?.map((rule, i) => (
+                                 <div key={i} className="flex items-start p-3 bg-white border border-stone-100 rounded-lg">
+                                     <span className="text-lg mr-3">{rule.icon || '⚠️'}</span>
+                                     <div>
+                                         <p className="text-xs font-bold text-stone-700">{rule.title}</p>
+                                         <p className="text-[10px] text-stone-500 mt-0.5">{rule.text}</p>
+                                     </div>
+                                 </div>
+                             ))}
+                        </div>
+                    </div>
                 </div>
+
+                 {/* Price Breakdown */}
+                 {selectedListing.priceBreakdown && (
+                    <div className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
+                         <h3 className="font-bold text-stone-800 mb-3 flex items-center">
+                            <Icon className="w-5 h-5 mr-2 text-emerald-600"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></Icon>
+                            Price Breakdown
+                        </h3>
+                        <div className="space-y-2">
+                             {selectedListing.priceBreakdown.map((item, i) => (
+                                 <div key={i} className="flex justify-between text-sm text-stone-600">
+                                     <span>{item.item}</span>
+                                     <span>₱{item.amount.toLocaleString()}</span>
+                                 </div>
+                             ))}
+                             <div className="flex justify-between font-bold text-stone-800 pt-2 border-t border-stone-100 mt-2">
+                                 <span>Total</span>
+                                 <span className="text-emerald-700">₱{selectedListing.price.toLocaleString()}</span>
+                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Refund Policy */}
+                <div className="bg-stone-100 p-4 rounded-xl border border-stone-200">
+                     <h3 className="font-bold text-stone-700 text-xs uppercase mb-1">Refund Policy</h3>
+                     <p className="text-xs text-stone-500 leading-relaxed">
+                         {selectedListing.refundPolicy || "Standard policy applies."}
+                     </p>
+                </div>
+            </div>
+
+            <div className="p-4 bg-white border-t border-stone-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                <button 
+                    onClick={() => setBookingStep('payment')}
+                    className="w-full bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center hover:bg-stone-800"
+                >
+                    Book Now
+                </button>
+            </div>
+            </>
+        );
+    }
+
+    // --- STEP 3: PAYMENT ---
+    if (bookingStep === 'payment') {
+        const total = selectedListing.price;
+        return (
+            <>
+            <div className="bg-white px-4 py-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm">
+                <button onClick={() => setBookingStep('details')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
+                    <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
+                </button>
+                <h2 className="ml-2 font-bold text-stone-800">Review & Pay</h2>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-stone-50/50">
+                
+                {/* Order Summary */}
+                <div className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
+                    <h3 className="font-bold text-stone-800 mb-3">Booking Summary</h3>
+                    <div className="flex items-center mb-4">
+                         <img src={selectedListing.imageUrl} className="w-16 h-16 rounded-lg object-cover mr-3 bg-stone-200" />
+                         <div>
+                             <p className="font-bold text-sm text-stone-800">{selectedListing.title}</p>
+                             <p className="text-xs text-stone-500">{selectedListing.location}</p>
+                             <p className="text-xs text-stone-500 mt-1">1 Guest • {selectedListing.category}</p>
+                         </div>
+                    </div>
+                    
+                    <div className="space-y-2 border-t border-stone-100 pt-3">
+                         {selectedListing.priceBreakdown ? selectedListing.priceBreakdown.map((item, i) => (
+                             <div key={i} className="flex justify-between text-xs text-stone-600">
+                                 <span>{item.item}</span>
+                                 <span>₱{item.amount.toLocaleString()}</span>
+                             </div>
+                         )) : (
+                             <div className="flex justify-between text-xs text-stone-600">
+                                 <span>Base Rate</span>
+                                 <span>₱{selectedListing.price.toLocaleString()}</span>
+                             </div>
+                         )}
+                         <div className="flex justify-between font-bold text-stone-800 pt-2 border-t border-stone-100 mt-2">
+                             <span>Total</span>
+                             <span className="text-emerald-700 text-lg">₱{total.toLocaleString()}</span>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Payment Methods */}
+                <div>
+                    <h3 className="font-bold text-stone-800 mb-3">Payment Method</h3>
+                    <div className="space-y-2">
+                         {['GCash', 'Maya', 'Credit/Debit Card'].map(method => (
+                             <label key={method} className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === method ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' : 'bg-white border-stone-200 hover:border-emerald-200'}`}>
+                                 <div className="flex items-center">
+                                     <input 
+                                        type="radio" 
+                                        name="payment" 
+                                        className="mr-3 h-5 w-5 text-emerald-600 focus:ring-emerald-500" 
+                                        checked={paymentMethod === method}
+                                        onChange={() => setPaymentMethod(method)}
+                                     />
+                                     <span className="font-medium text-stone-700">{method}</span>
+                                 </div>
+                                 <Icon className={`w-5 h-5 ${paymentMethod === method ? 'text-emerald-600' : 'text-stone-300'}`}>
+                                     {method === 'Credit/Debit Card' ? <rect x="2" y="5" width="20" height="14" rx="2" /> : <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />}
+                                 </Icon>
+                             </label>
+                         ))}
+                    </div>
+                </div>
+
+                {/* Terms */}
+                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+                    <label className="flex items-start cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            className="mt-1 mr-3 h-5 w-5 text-emerald-600 rounded focus:ring-emerald-500"
+                            checked={agreeTerms}
+                            onChange={(e) => setAgreeTerms(e.target.checked)} 
+                        />
+                        <span className="text-xs text-stone-600 leading-snug">
+                            I agree to the <span className="font-bold underline">Terms & Conditions</span>, <span className="font-bold underline">Refund Policy</span>, and <span className="font-bold underline">Community Guidelines</span> regarding local culture and environment protection.
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div className="p-4 bg-white border-t border-stone-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                <button 
+                    onClick={handleBook}
+                    disabled={!agreeTerms || isProcessingPayment}
+                    className={`w-full bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center ${(!agreeTerms || isProcessingPayment) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-500'}`}
+                >
+                    {isProcessingPayment ? (
+                        <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                        </>
+                    ) : `Pay ₱${total.toLocaleString()} & Book`}
+                </button>
+            </div>
+            </>
+        );
+    }
+  };
+
+  return (
+    <div className="bg-stone-50 min-h-full pb-20 relative">
+      
+      {/* --- LISTING DETAILS MODAL --- */}
+      {selectedListing && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-black/60 pointer-events-auto backdrop-blur-sm transition-opacity"
+                onClick={() => setSelectedListing(null)}
+            ></div>
+            
+            {/* Modal Card */}
+            <div className={`bg-white w-full sm:max-w-md ${bookingStep === 'overview' ? 'max-h-[90vh]' : 'h-[85vh]'} sm:rounded-2xl rounded-t-3xl shadow-2xl pointer-events-auto relative animate-slide-in-right flex flex-col overflow-hidden transition-all duration-300`}>
+                {renderModalContent()}
             </div>
         </div>
       )}
@@ -567,13 +810,20 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                                 </div>
                             </button>
 
-                            {/* 3D Toggle */}
-                            <button 
-                                onClick={togglePitch}
-                                className={`w-10 h-10 rounded-full shadow-xl border flex items-center justify-center transition-all active:scale-90 ${mapPitch > 0 ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-white text-stone-600 border-stone-200'}`}
-                            >
-                                <span className="text-[10px] font-bold">3D</span>
-                            </button>
+                            {/* Tilt Slider */}
+                            <div className="bg-white p-2 rounded-full shadow-xl border border-stone-200 flex flex-col items-center justify-center h-32 w-10">
+                                <span className="text-[8px] font-bold text-stone-400 mb-1">3D</span>
+                                <input 
+                                    type="range"
+                                    min="0"
+                                    max="60"
+                                    value={mapPitch}
+                                    onChange={(e) => setMapPitch(Number(e.target.value))}
+                                    className="h-20 w-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 -rotate-180"
+                                    style={{ writingMode: 'vertical-lr', direction: 'rtl' }} 
+                                />
+                                <span className="text-[8px] font-bold text-stone-400 mt-1">2D</span>
+                            </div>
                             
                             {/* Rotate Controls */}
                             <div className="flex bg-white rounded-full shadow-xl border border-stone-200 overflow-hidden w-10 flex-col">
@@ -589,7 +839,8 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                </div>
                
                {/* Zoom & Location Controls */}
-               <div className="absolute bottom-24 right-4 z-[1100] flex flex-col space-y-3 pointer-events-auto">
+               <div className="absolute bottom-24 right-4 z-[1100] flex flex-col space-y-3 pointer-events-auto items-end">
+                    
                     <button 
                         onClick={handleLocateMe}
                         className="w-10 h-10 bg-white rounded-full shadow-xl border border-stone-200 flex items-center justify-center text-stone-600 hover:text-emerald-600 active:scale-90 transition-transform"
