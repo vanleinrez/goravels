@@ -189,13 +189,12 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
     // --- STEP 1: OVERVIEW ---
     if (bookingStep === 'overview') {
         return (
-            <>
             <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                <div className="relative h-56 w-full flex-shrink-0 group">
+                <div className="relative h-64 sm:h-56 w-full flex-shrink-0 group">
                     <img src={selectedListing.imageUrl} alt={selectedListing.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <button 
                         onClick={() => setSelectedListing(null)}
-                        className="absolute top-4 right-4 bg-black/30 backdrop-blur-md p-2 rounded-full text-white hover:bg-black/50 transition-colors"
+                        className="absolute top-8 sm:top-4 right-4 bg-black/30 backdrop-blur-md p-2 rounded-full text-white hover:bg-black/50 transition-colors z-10"
                     >
                         <Icon className="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>
                     </button>
@@ -259,34 +258,37 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                                 </div>
                         </div>
                     </div>
+
+                    {/* Merged Footer Content (Scrollable, Non-Sticky) */}
+                    <div className="pt-6 mt-4 border-t border-stone-100 pb-12">
+                         <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-stone-500 text-xs font-bold uppercase">Price</p>
+                                <p className="text-2xl font-bold text-emerald-700">
+                                    {selectedListing.price > 0 ? `₱${selectedListing.price}` : 'Free'}
+                                </p>
+                            </div>
+
+                            {bookedListings.includes(selectedListing.id) ? (
+                                <button 
+                                    onClick={handleGetDirection}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all flex items-center"
+                                >
+                                    <Icon className="w-5 h-5 mr-2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></Icon>
+                                    Get Direction
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => setBookingStep('details')}
+                                    className="bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center hover:bg-stone-800"
+                                >
+                                    Details
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            {/* Footer Overview */}
-            <div className="p-4 bg-white border-t border-stone-100 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-                <div>
-                    <p className="text-stone-500 text-xs font-bold uppercase">Price</p>
-                    <p className="text-2xl font-bold text-emerald-700">₱{selectedListing.price}</p>
-                </div>
-
-                {bookedListings.includes(selectedListing.id) ? (
-                    <button 
-                        onClick={handleGetDirection}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all flex items-center"
-                    >
-                        <Icon className="w-5 h-5 mr-2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></Icon>
-                        Get Direction
-                    </button>
-                ) : (
-                    <button 
-                        onClick={() => setBookingStep('details')}
-                        className="bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center hover:bg-stone-800"
-                    >
-                        Book Now
-                    </button>
-                )}
-            </div>
-            </>
         );
     }
 
@@ -294,7 +296,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
     if (bookingStep === 'details') {
         return (
             <>
-            <div className="bg-white px-4 py-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm">
+            <div className="bg-white px-4 py-4 pt-12 sm:py-3 sm:pt-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm shrink-0">
                 <button onClick={() => setBookingStep('overview')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
                     <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
                 </button>
@@ -415,15 +417,16 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                          {selectedListing.refundPolicy || "Standard policy applies."}
                      </p>
                 </div>
-            </div>
 
-            <div className="p-4 bg-white border-t border-stone-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-                <button 
-                    onClick={() => setBookingStep('payment')}
-                    className="w-full bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center hover:bg-stone-800"
-                >
-                    Book Now
-                </button>
+                {/* Non-sticky Book Now Button (Merged into scroll content) */}
+                <div className="pt-4 pb-16">
+                     <button 
+                        onClick={() => setBookingStep('payment')}
+                        className="w-full bg-stone-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center hover:bg-stone-800"
+                    >
+                        Book Now
+                    </button>
+                </div>
             </div>
             </>
         );
@@ -434,7 +437,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
         const total = selectedListing.price;
         return (
             <>
-            <div className="bg-white px-4 py-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm">
+            <div className="bg-white px-4 py-4 pt-12 sm:py-3 sm:pt-3 border-b border-stone-200 flex items-center sticky top-0 z-30 shadow-sm shrink-0">
                 <button onClick={() => setBookingStep('details')} className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors">
                     <Icon className="w-5 h-5"><path d="m15 18-6-6 6-6"/></Icon>
                 </button>
@@ -514,7 +517,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                 </div>
             </div>
 
-            <div className="p-4 bg-white border-t border-stone-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+            <div className="p-4 pb-8 sm:pb-4 bg-white border-t border-stone-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 shrink-0">
                 <button 
                     onClick={handleBook}
                     disabled={!agreeTerms || isProcessingPayment}
@@ -548,8 +551,8 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
                 onClick={() => setSelectedListing(null)}
             ></div>
             
-            {/* Modal Card */}
-            <div className={`bg-white w-full sm:max-w-md ${bookingStep === 'overview' ? 'max-h-[90vh]' : 'h-[85vh]'} sm:rounded-2xl rounded-t-3xl shadow-2xl pointer-events-auto relative animate-slide-in-right flex flex-col overflow-hidden transition-all duration-300`}>
+            {/* Modal Card - Full screen on Mobile, Modal on Desktop */}
+            <div className={`bg-white w-full h-full sm:h-[85vh] sm:w-full sm:max-w-md sm:rounded-2xl shadow-2xl pointer-events-auto relative animate-slide-in-right flex flex-col overflow-hidden transition-all duration-300`}>
                 {renderModalContent()}
             </div>
         </div>
@@ -675,224 +678,145 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister }) => 
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-stone-800 flex items-center">
-                    <Icon className="w-5 h-5 text-orange-500 mr-2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></Icon>
+                    <Icon className="w-5 h-5 text-orange-500 mr-2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12 17 12" /></Icon>
                     Trending Now
                 </h2>
+                <button className="text-xs font-bold text-emerald-600">See All</button>
               </div>
-              <div className="flex overflow-x-auto pb-4 -mx-4 px-4 space-x-4 scrollbar-hide">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {filteredListings.filter(l => l.isTrending).map(listing => (
-                  <div key={listing.id} onClick={() => handleProtectedAction(listing)}>
-                      <ListingCard listing={listing} />
+                  <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="flex bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                    <img src={listing.imageUrl} alt={listing.title} className="w-24 h-24 object-cover" />
+                    <div className="p-3 flex-1 flex flex-col justify-center">
+                      <h3 className="font-bold text-stone-800 text-sm mb-1">{listing.title}</h3>
+                      <p className="text-xs text-stone-500 mb-2">{listing.location}</p>
+                      <div className="flex justify-between items-center">
+                          <span className="text-emerald-600 font-bold text-sm">₱{listing.price}</span>
+                          <div className="flex items-center text-[10px] text-stone-400">
+                             <span className="text-yellow-400 mr-1">★</span> {listing.rating}
+                          </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
-                {filteredListings.filter(l => l.isTrending).length === 0 && (
-                    <p className="text-sm text-stone-500 pl-4">No trending items in this category.</p>
-                )}
               </div>
             </div>
 
-            {/* New Destinations */}
+            {/* All Listings */}
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-stone-800 flex items-center">
-                    <Icon className="w-5 h-5 text-blue-500 mr-2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></Icon>
-                    New Destinations
-                </h2>
-              </div>
-              <div className="flex overflow-x-auto pb-4 -mx-4 px-4 space-x-4 scrollbar-hide">
-                {filteredListings.filter(l => l.isNew).map(listing => (
-                  <div key={listing.id} onClick={() => handleProtectedAction(listing)}>
-                      <ListingCard listing={listing} />
-                  </div>
-                ))}
-                 {filteredListings.filter(l => l.isNew).length === 0 && (
-                    <p className="text-sm text-stone-500 pl-4">No new items in this category.</p>
-                )}
-              </div>
-            </div>
-            
-            {/* All Listings (Fallback Grid) */}
-            <div>
-                 <h2 className="text-lg font-bold text-stone-800 mb-4">Explore {selectedCategory !== 'All' ? selectedCategory : 'Everything'}</h2>
-                 <div className="grid grid-cols-1 gap-4">
-                     {filteredListings.slice(0, 10).map(listing => (
-                         <div key={listing.id} className="flex bg-white p-3 rounded-xl shadow-sm border border-stone-100" onClick={() => handleProtectedAction(listing)}>
-                             <img src={listing.imageUrl} className="w-20 h-20 rounded-lg object-cover bg-stone-200" />
-                             <div className="ml-3 flex-1">
-                                 <h3 className="font-bold text-stone-800 text-sm">{listing.title}</h3>
-                                 <p className="text-xs text-stone-500 mb-2">{listing.location}</p>
-                                 <div className="flex justify-between items-center">
-                                     <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{listing.category}</span>
-                                     <span className="text-sm font-bold text-stone-800">₱{listing.price}</span>
-                                 </div>
-                             </div>
-                         </div>
-                     ))}
-                 </div>
+               <h2 className="text-lg font-bold text-stone-800 mb-4">All Adventures</h2>
+               <div className="space-y-4">
+                  {filteredListings.map(listing => (
+                      <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                          <div className="h-40 relative">
+                              <img src={listing.imageUrl} className="w-full h-full object-cover" />
+                              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold shadow-sm">
+                                  {listing.category}
+                              </div>
+                          </div>
+                          <div className="p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                      <h3 className="font-bold text-lg text-stone-800">{listing.title}</h3>
+                                      <p className="text-stone-500 text-xs flex items-center mt-1">
+                                          <Icon className="w-3 h-3 mr-1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
+                                          {listing.location}
+                                      </p>
+                                  </div>
+                                  <div className="flex flex-col items-end">
+                                      <span className="font-bold text-emerald-700 text-lg">₱{listing.price}</span>
+                                      <div className="flex items-center text-xs text-stone-500">
+                                          <Icon className="w-3 h-3 text-yellow-400 fill-current mr-1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></Icon>
+                                          {listing.rating} ({listing.reviews})
+                                      </div>
+                                  </div>
+                              </div>
+                              <p className="text-sm text-stone-600 line-clamp-2 leading-relaxed">
+                                  {listing.description || `Discover the beauty of ${listing.location}. A perfect getaway for ${listing.category} lovers.`}
+                              </p>
+                          </div>
+                      </div>
+                  ))}
+               </div>
             </div>
 
           </div>
         ) : (
-            <div className="relative h-[600px] -mx-4 bg-stone-100 overflow-hidden">
-               
-               {/* Map Controls */}
-               <div className="absolute top-4 left-4 right-4 z-[1100] flex flex-col space-y-2 pointer-events-none">
-                    
-                    {/* Navigation Route Info */}
-                    {navigationRoute && (
-                         <div className="bg-blue-600 text-white p-4 rounded-xl shadow-lg border border-blue-500 pointer-events-auto flex justify-between items-center animate-fade-in">
-                              <div>
-                                  <p className="text-xs font-bold uppercase text-blue-200">Navigation Active</p>
-                                  <p className="font-bold">To destination</p>
-                              </div>
-                              <button 
-                                onClick={() => { setNavigationRoute(null); mapRef.current?.zoomOut(); resetNorth(); }}
-                                className="bg-white/20 hover:bg-white/30 p-2 rounded-lg text-xs font-bold"
-                              >
-                                  End
-                              </button>
-                         </div>
-                    )}
-
-                    <div className="flex justify-between items-start pointer-events-auto space-x-2">
-                         {/* Radius Filter (Hide when routing) */}
-                        {!navigationRoute && (
-                            <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-lg border border-stone-200 flex-1">
-                                <label className="text-xs font-bold text-stone-600 uppercase mb-1 flex justify-between">
-                                    <span>Search Radius</span>
-                                    <span className="text-emerald-600">{mapRadius} km</span>
-                                </label>
-                                <input 
-                                    type="range" 
-                                    min="5" 
-                                    max="50" 
-                                    step="5"
-                                    value={mapRadius} 
-                                    onChange={(e) => setMapRadius(Number(e.target.value))}
-                                    onPointerDown={(e) => e.stopPropagation()} 
-                                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                                />
-                                <div className="flex justify-between text-[10px] text-stone-400 mt-1">
-                                    <span>5km</span>
-                                    <span>50km</span>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Map Layer Select */}
-                        <div className="flex-1 overflow-x-auto scrollbar-hide">
-                            <div className="bg-white/90 backdrop-blur-md p-2 rounded-xl shadow-lg border border-stone-200 flex space-x-2">
-                                {(['standard', 'satellite', 'hybrid', 'terrain'] as const).map(type => (
-                                    <button
-                                        key={type}
-                                        onClick={() => setMapLayer(type)}
-                                        className={`px-3 py-2 rounded-lg text-xs font-bold capitalize transition-colors whitespace-nowrap ${
-                                            mapLayer === type ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
-                                        }`}
-                                    >
-                                        {type}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* 3D / Rotation Controls */}
-                        <div className="flex flex-col space-y-2 pointer-events-auto">
-                            {/* Compass / Reset North */}
-                            <button 
-                                onClick={resetNorth}
-                                className="w-10 h-10 bg-white rounded-full shadow-xl border border-stone-200 flex items-center justify-center text-stone-600 hover:text-red-500 active:scale-90 transition-transform relative"
-                                title="Reset North"
-                            >
-                                <div style={{ transform: `rotate(${-mapBearing}deg)`, transition: 'transform 0.5s ease-in-out' }}>
-                                    <Icon className="w-6 h-6"><polygon points="12 2 19 21 12 17 5 21 12 2" fill="currentColor" /></Icon>
-                                    <span className="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 text-[8px] font-bold text-red-500">N</span>
-                                </div>
-                            </button>
-
-                            {/* Tilt Slider */}
-                            <div className="bg-white p-2 rounded-full shadow-xl border border-stone-200 flex flex-col items-center justify-center h-32 w-10">
-                                <span className="text-[8px] font-bold text-stone-400 mb-1">3D</span>
-                                <input 
-                                    type="range"
-                                    min="0"
-                                    max="60"
-                                    value={mapPitch}
-                                    onChange={(e) => setMapPitch(Number(e.target.value))}
-                                    className="h-20 w-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 -rotate-180"
-                                    style={{ writingMode: 'vertical-lr', direction: 'rtl' }} 
-                                />
-                                <span className="text-[8px] font-bold text-stone-400 mt-1">2D</span>
-                            </div>
-                            
-                            {/* Rotate Controls */}
-                            <div className="flex bg-white rounded-full shadow-xl border border-stone-200 overflow-hidden w-10 flex-col">
-                                <button onClick={() => rotateMap(-45)} className="h-8 flex items-center justify-center hover:bg-stone-50 border-b border-stone-100">
-                                    <Icon className="w-4 h-4 text-stone-500"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></Icon>
-                                </button>
-                                <button onClick={() => rotateMap(45)} className="h-8 flex items-center justify-center hover:bg-stone-50">
-                                    <Icon className="w-4 h-4 text-stone-500"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /></Icon>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-               </div>
-               
-               {/* Zoom & Location Controls */}
-               <div className="absolute bottom-24 right-4 z-[1100] flex flex-col space-y-3 pointer-events-auto items-end">
-                    
-                    <button 
-                        onClick={handleLocateMe}
-                        className="w-10 h-10 bg-white rounded-full shadow-xl border border-stone-200 flex items-center justify-center text-stone-600 hover:text-emerald-600 active:scale-90 transition-transform"
-                        title="Get My Location"
-                    >
-                        <Icon className={`w-5 h-5 ${isLocating ? 'animate-spin text-emerald-600' : ''}`}>
-                            {isLocating 
-                                ? <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-2.122-7.878l-2.828 2.828M7.05 16.95l-2.828 2.828M16.95 16.95l2.828 2.828M7.05 7.05L4.222 4.222" /> 
-                                : <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                            }
-                        </Icon>
+          <div className="h-[calc(100vh-250px)] w-full rounded-2xl overflow-hidden shadow-inner border border-stone-200 relative animate-fade-in">
+            <MapView 
+                ref={mapRef}
+                listings={mapListings} 
+                safetyZones={mockSafetyZones}
+                radiusKm={mapRadius}
+                userLocation={userLocation}
+                pitch={mapPitch}
+                bearing={mapBearing}
+                layerType={mapLayer}
+                route={navigationRoute}
+            />
+            
+            {/* Map Controls Overlay */}
+            <div className="absolute top-4 right-4 flex flex-col space-y-2">
+                <button onClick={() => mapRef.current?.zoomIn()} className="bg-white p-2 rounded-lg shadow-md text-stone-600 hover:bg-stone-50"><Icon className="w-5 h-5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Icon></button>
+                <button onClick={() => mapRef.current?.zoomOut()} className="bg-white p-2 rounded-lg shadow-md text-stone-600 hover:bg-stone-50"><Icon className="w-5 h-5"><line x1="5" y1="12" x2="19" y2="12"/></Icon></button>
+                <button onClick={() => mapRef.current?.centerOnUser()} className={`p-2 rounded-lg shadow-md transition-colors ${isLocating ? 'bg-emerald-100 text-emerald-600 animate-pulse' : 'bg-white text-stone-600 hover:bg-stone-50'}`}>
+                    <Icon className="w-5 h-5"><path d="M12 22s-8-4-8-10V5l8-3 8 3v7c0 6-8 10-8 10z"/><circle cx="12" cy="10" r="3"/></Icon>
+                </button>
+                <div className="relative group">
+                     <button className="bg-white p-2 rounded-lg shadow-md text-stone-600 hover:bg-stone-50"><Icon className="w-5 h-5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></Icon></button>
+                     <div className="absolute right-full top-0 mr-2 bg-white rounded-lg shadow-lg p-2 hidden group-hover:flex flex-col space-y-1 min-w-[100px]">
+                         {(['standard', 'satellite', 'hybrid', 'terrain'] as MapLayerType[]).map(t => (
+                             <button key={t} onClick={() => setMapLayer(t)} className={`text-xs text-left px-2 py-1 rounded ${mapLayer === t ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-stone-50'}`}>
+                                 {t.charAt(0).toUpperCase() + t.slice(1)}
+                             </button>
+                         ))}
+                     </div>
+                </div>
+                {mapBearing !== 0 && (
+                    <button onClick={resetNorth} className="bg-white p-2 rounded-lg shadow-md text-red-500 font-bold text-xs" style={{ transform: `rotate(${mapBearing}deg)` }}>
+                        N
                     </button>
-
-                    <div className="flex flex-col bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden">
-                        <button 
-                            onClick={() => mapRef.current?.zoomIn()}
-                            className="w-10 h-10 flex items-center justify-center text-stone-600 hover:bg-stone-50 active:bg-stone-100 border-b border-stone-100"
-                        >
-                            <Icon className="w-5 h-5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Icon>
-                        </button>
-                        <button 
-                            onClick={() => mapRef.current?.zoomOut()}
-                            className="w-10 h-10 flex items-center justify-center text-stone-600 hover:bg-stone-50 active:bg-stone-100"
-                        >
-                             <Icon className="w-5 h-5"><line x1="5" y1="12" x2="19" y2="12"/></Icon>
-                        </button>
-                    </div>
-               </div>
-
-              <div className="h-full w-full">
-                <MapView 
-                    ref={mapRef}
-                    listings={mapListings} 
-                    safetyZones={mockSafetyZones} 
-                    radiusKm={mapRadius}
-                    userLocation={userLocation}
-                    pitch={mapPitch}
-                    bearing={mapBearing}
-                    layerType={mapLayer}
-                    route={navigationRoute}
-                />
-              </div>
-
-               {/* Listings Count (Only show if not routing) */}
-               {!navigationRoute && (
-                   <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[1100] bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-stone-200 w-max max-w-[80%]">
-                      <span className="text-xs font-bold text-stone-600 block text-center truncate">
-                         {mapListings.length} listings in radius
-                      </span>
-                   </div>
-               )}
+                )}
             </div>
+
+            {/* Map 3D Controls */}
+            <div className="absolute bottom-6 left-4 right-4 flex justify-between items-end pointer-events-none">
+                 <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg pointer-events-auto space-y-2">
+                     <p className="text-[10px] font-bold text-stone-400 uppercase">Search Radius: {mapRadius}km</p>
+                     <input 
+                        type="range" 
+                        min="5" max="100" 
+                        value={mapRadius} 
+                        onChange={(e) => setMapRadius(Number(e.target.value))}
+                        className="w-32 h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                     />
+                 </div>
+                 
+                 <div className="pointer-events-auto flex space-x-2">
+                     <button onClick={() => setMapPitch(p => p === 0 ? 60 : 0)} className={`px-3 py-2 rounded-lg shadow-md text-xs font-bold transition-colors ${mapPitch > 0 ? 'bg-emerald-600 text-white' : 'bg-white text-stone-600'}`}>
+                         3D
+                     </button>
+                     <button onClick={() => rotateMap(45)} className="bg-white px-3 py-2 rounded-lg shadow-md text-xs font-bold text-stone-600">
+                         Rotate
+                     </button>
+                 </div>
+            </div>
+            
+            {navigationRoute && (
+                 <div className="absolute top-4 left-4 right-16 bg-blue-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-between animate-slide-in-right z-10">
+                     <div className="flex items-center">
+                         <Icon className="w-5 h-5 mr-2 animate-pulse"><polygon points="3 11 22 2 13 21 11 13 3 11"/></Icon>
+                         <div>
+                             <p className="text-xs font-bold opacity-80">Navigating to</p>
+                             <p className="text-sm font-bold truncate max-w-[150px]">{mockListings.find(l => l.lat === navigationRoute.to.lat)?.title || 'Destination'}</p>
+                         </div>
+                     </div>
+                     <button onClick={() => { setNavigationRoute(null); setMapPitch(0); setMapBearing(0); }} className="bg-white/20 p-1.5 rounded-full hover:bg-white/30">
+                         <Icon className="w-4 h-4"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>
+                     </button>
+                 </div>
+            )}
+          </div>
         )}
       </div>
     </div>
