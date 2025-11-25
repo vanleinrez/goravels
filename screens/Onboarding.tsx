@@ -12,29 +12,44 @@ interface OnboardingProps {
 const carouselData = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1598556776374-1b7724213d28?q=80&w=1000&auto=format&fit=crop', // Community/People
+    image: 'https://images.unsplash.com/photo-1518182170546-0766ba6f9285?q=80&w=1000&auto=format&fit=crop', // Community/Interaction
     title: 'Community Immersion',
     desc: 'Connect with locals and experience the warmth of true Filipino hospitality.'
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1533653896580-b0b304675402?q=80&w=1000&auto=format&fit=crop', // Experience/Activity
+    image: 'https://images.unsplash.com/photo-1533653896580-b0b304675402?q=80&w=1000&auto=format&fit=crop', // Rice Terraces/Activity
     title: 'Authentic Experiences',
     desc: 'Rice planting, harvesting, and living a day in the life of the barrio.'
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1595964267468-d731885f8386?q=80&w=1000&auto=format&fit=crop', // Rural Stay/Hut
+    image: 'https://images.unsplash.com/photo-1519114056088-b877fe073a1e?q=80&w=1000&auto=format&fit=crop', // Rural Hut/Stay
     title: 'Rural Stays',
     desc: 'Sleep in bamboo cottages, eco-lodges, and peaceful farm stays.'
   },
   {
     id: 4,
-    image: 'https://images.unsplash.com/photo-1605218427360-69279a321d51?q=80&w=1000&auto=format&fit=crop', // Food
+    image: 'https://images.unsplash.com/photo-1605218427360-69279a321d51?q=80&w=1000&auto=format&fit=crop', // Filipino Food
     title: 'Local Flavors',
     desc: 'Farm-to-table dining and authentic provincial cuisine.'
   }
 ];
+
+// Reusable Logo Component
+const BrandLogo = ({ className = "w-full h-full" }: { className?: string }) => (
+  <svg viewBox="0 0 300 150" className={className}>
+    <text x="50" y="95" fontFamily="Inter, sans-serif" fontWeight="900" fontSize="80" fill="#0d9488">Gora</text>
+    <path d="M 60 110 Q 120 140 180 110 T 240 100" fill="none" stroke="#f43f5e" strokeWidth="6" strokeLinecap="round" style={{ strokeDasharray: '15, 15' }} />
+    <g transform="translate(15, 15)">
+        <path d="M 250 85 C 245 95, 255 105, 265 100 C 275 95, 275 80, 265 75 C 255 70, 250 75, 250 85 Z" fill="#f59e0b" />
+        <circle cx="245" cy="70" r="5" fill="#f59e0b" />
+        <circle cx="258" cy="62" r="5" fill="#f59e0b" />
+        <circle cx="272" cy="70" r="5" fill="#f59e0b" />
+        <circle cx="280" cy="82" r="5" fill="#f59e0b" />
+    </g>
+  </svg>
+);
 
 export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setContext }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -55,7 +70,7 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#059669 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
         
-        <div className="z-10 flex flex-col items-center">
+        <div className="z-10 flex flex-col items-center animate-fade-in">
            {/* Animated Logo Container */}
            <div className="relative w-64 h-32">
               <svg viewBox="0 0 300 150" className="w-full h-full">
@@ -132,16 +147,20 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
     <div className="h-full flex flex-col bg-stone-50 animate-fade-in relative">
       
       {/* Top Banner / Hero Logo */}
-      <div className="pt-8 pb-4 flex flex-col items-center justify-center bg-white z-20 shadow-sm relative">
-          <div className="flex items-center space-x-2">
-            <span className="text-3xl font-black text-emerald-600 tracking-tight">Gora</span>
-            <Icon className="w-6 h-6 text-orange-500 fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></Icon>
+      <div className="pt-10 pb-8 flex flex-col items-center justify-center bg-white z-20 shadow-sm relative rounded-b-[2.5rem]">
+          <div className="w-48 h-24 relative">
+             <BrandLogo />
           </div>
-          <p className="text-sm font-medium text-emerald-800 mt-1 uppercase tracking-widest">Tara, Gora na!</p>
+          <div className="text-center mt-2 space-y-1 px-4">
+             <p className="text-stone-500 text-[10px] font-bold uppercase tracking-[0.25em]">Power on your adventure</p>
+             <h1 className="text-3xl font-black text-stone-800 italic tracking-tighter transform -rotate-2">
+                Tara, <span className="text-emerald-600">Gora Na!</span>
+             </h1>
+          </div>
       </div>
 
       {/* Carousel Section */}
-      <div className="flex-1 relative overflow-hidden bg-stone-900">
+      <div className="flex-1 relative overflow-hidden bg-stone-900 -mt-10 pt-10">
         {carouselData.map((slide, index) => (
           <div 
             key={slide.id}
@@ -159,7 +178,7 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
             
             {/* Text Content */}
             <div className="absolute bottom-0 left-0 right-0 p-8 pb-12 text-white transform transition-transform duration-700">
-              <span className="inline-block px-3 py-1 bg-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3">
+              <span className="inline-block px-3 py-1 bg-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 shadow-lg">
                 Discover
               </span>
               <h2 className="text-3xl font-bold mb-2 leading-tight">{slide.title}</h2>

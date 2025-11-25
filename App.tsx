@@ -101,6 +101,17 @@ const App: React.FC = () => {
     setAuthStep('app');
   };
 
+  const handleSwitchToHost = () => {
+    setLoginRole('Host');
+    setAuthStep('host-dashboard');
+  };
+
+  const handleLogout = () => {
+    setAuthStep('welcome');
+    setLoginRole(null);
+    setAuthContext('existing');
+  };
+
   const toggleTripStatus = () => setIsTripActive(!isTripActive);
 
   const renderContent = () => {
@@ -153,7 +164,7 @@ const App: React.FC = () => {
         return (
           <HostDashboardScreen 
             status={hostStatus} 
-            onLogout={() => setAuthStep('welcome')} 
+            onLogout={handleLogout} 
             onSwitchToTraveler={handleSwitchToTraveler}
             isTripActive={isTripActive}
             onToggleTrip={toggleTripStatus}
@@ -184,7 +195,13 @@ const App: React.FC = () => {
                 />
               )}
               {activeScreen === 'Connect' && <ConnectScreen />}
-              {activeScreen === 'Profile' && <ProfileScreen user={currentUser} />}
+              {activeScreen === 'Profile' && (
+                <ProfileScreen 
+                  user={currentUser} 
+                  onLogout={handleLogout}
+                  onSwitchToHost={handleSwitchToHost}
+                />
+              )}
             </main>
             <BottomNav 
               activeScreen={activeScreen} 
