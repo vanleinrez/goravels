@@ -104,12 +104,33 @@ const App: React.FC = () => {
     setAuthStep('app');
   };
 
-  const handleTravelerRegComplete = () => {
-    setCurrentUser(mockUser); // Set to a logged in user
+  const handleTravelerRegComplete = (data: any) => {
+    // Capture user details from registration form
+    const updatedUser: User = {
+        ...mockUser,
+        name: data.fullName || 'Traveler',
+        nickname: data.nickname || data.fullName?.split(' ')[0] || 'Traveler',
+        tier: 'Explorer',
+        location: data.province || mockUser.location,
+        preferences: data.interests || mockUser.preferences
+    };
+    setCurrentUser(updatedUser); 
     setAuthStep('app');
   };
 
-  const handleHostRegComplete = () => {
+  const handleHostRegComplete = (data: any) => {
+    // Capture host details from registration form
+    const hostUser: User = {
+        ...mockUser,
+        name: `${data.firstName} ${data.familyName}`,
+        nickname: data.nickname,
+        email: data.email,
+        phone: data.phone,
+        location: data.address,
+        isHost: true,
+        avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop'
+    };
+    setCurrentUser(hostUser);
     setHostStatus('Pending');
     setAuthStep('host-dashboard');
   };
@@ -119,7 +140,7 @@ const App: React.FC = () => {
   };
 
   const handleSwitchToTraveler = () => {
-    setCurrentUser(mockUser);
+    setCurrentUser(prev => ({...prev, isHost: true})); // Keep host status
     setActiveScreen('Explore');
     setAuthStep('app');
   };
@@ -133,6 +154,7 @@ const App: React.FC = () => {
     setAuthStep('welcome');
     setLoginRole(null);
     setAuthContext('existing');
+    setIsSosActive(false);
   };
 
   const toggleTripStatus = () => setIsTripActive(!isTripActive);
@@ -191,6 +213,7 @@ const App: React.FC = () => {
       case 'host-dashboard':
         return (
           <HostDashboardScreen 
+            user={currentUser}
             status={hostStatus} 
             onLogout={handleLogout} 
             onSwitchToTraveler={handleSwitchToTraveler}

@@ -51,7 +51,7 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon, isActive, onClick, isSpe
         );
     }
 
-    // Default Gora Theme State: Emerald
+    // Default Gora Theme State: Emerald (Updated from black/stone-900)
     return (
       <button
         onClick={onClick}

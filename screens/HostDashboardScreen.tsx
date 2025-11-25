@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import Icon from '../components/Icon';
 import SosScreen from './SosScreen';
+import type { User } from '../types';
 
 interface HostDashboardProps {
+  user?: User; // Add user prop
   onLogout: () => void;
   status?: 'Pending' | 'Active';
   onSwitchToTraveler: () => void;
@@ -14,14 +16,6 @@ interface HostDashboardProps {
 type Tab = 'Overview' | 'Listings' | 'Calendar' | 'Earnings' | 'Settings';
 type BookingStatus = 'Check-In' | 'Check-Out' | 'Completed' | 'Cancelled';
 type PaymentStatus = 'Pending' | 'Processing' | 'Paid';
-
-// Mock Data
-const MOCK_HOST = {
-  name: 'Juan Dela Cruz',
-  avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
-  rating: 4.8,
-  joined: 'October 2023'
-};
 
 const MOCK_EARNINGS = {
   available: 15400.00,
@@ -80,12 +74,16 @@ const MOCK_LISTINGS = [
   { id: 'l3', title: 'Bukidnon Cloud House', status: 'Under Review', price: 3200, views: 0, bookings: 0 },
 ];
 
-const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 'Active', onSwitchToTraveler, isTripActive, onToggleTrip }) => {
+const HostDashboardScreen: React.FC<HostDashboardProps> = ({ user, onLogout, status = 'Active', onSwitchToTraveler, isTripActive, onToggleTrip }) => {
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [showSosModal, setShowSosModal] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
+
+  // Use passed user data or fallbacks
+  const hostName = user?.nickname || user?.name || 'Host User';
+  const hostAvatar = user?.avatarUrl || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop';
 
   const Sidebar = () => (
     <>
@@ -105,7 +103,7 @@ const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
             <div className="relative">
-               <img src={MOCK_HOST.avatar} className="w-12 h-12 rounded-full border-2 border-stone-100" alt="Host" />
+               <img src={hostAvatar} className="w-12 h-12 rounded-full border-2 border-stone-100" alt="Host" />
                {status === 'Active' && (
                  <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5 border-2 border-white">
                     <Icon className="w-3 h-3"><polyline points="20 6 9 17 4 12" /></Icon>
@@ -113,7 +111,7 @@ const HostDashboardScreen: React.FC<HostDashboardProps> = ({ onLogout, status = 
                )}
             </div>
             <div>
-              <p className="font-bold text-sm text-stone-800">{MOCK_HOST.name}</p>
+              <p className="font-bold text-sm text-stone-800 line-clamp-1">{hostName}</p>
               <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1 ${status === 'Active' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
                 {status} Host
               </div>

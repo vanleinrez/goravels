@@ -1,4 +1,3 @@
-
 import type { User, Listing, SafetyZone, Trip, Traveler, Badge, Post } from './types';
 
 export const mockBadges: Badge[] = [
@@ -103,36 +102,47 @@ const commonDetails = {
     refundPolicy: "Full refund if cancelled 48 hours before the trip. 50% refund if cancelled 24 hours before. No refund for same-day cancellation.",
 };
 
+const images = [
+  'https://images.unsplash.com/photo-1533234962703-2312c8742a8b?auto=format&fit=crop&w=800',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800',
+  'https://images.unsplash.com/photo-1595964267468-d731885f8386?auto=format&fit=crop&w=800',
+  'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800'
+];
+
 export const mockListings: Listing[] = [
   // BUKIDNON
   {
     id: '1', title: 'Dahilayan Adventure Park', location: 'Manolo Fortich, Bukidnon',
     rating: 4.8, reviews: 342, price: 1500, category: 'Adventures',
-    imageUrl: 'https://images.unsplash.com/photo-1533234962703-2312c8742a8b?auto=format&fit=crop&w=800',
+    imageUrl: images[0], images: images,
     lat: 8.219, lng: 124.877, isTrending: true, sponsorshipTier: 'Major',
+    capacity: { type: 'Slots', value: 20 },
     ...commonDetails,
     priceBreakdown: [{ item: "Park Entrance", amount: 500 }, { item: "Zipline Ride", amount: 700 }, { item: "Guide & Gear", amount: 300 }]
   },
   {
     id: '2', title: 'Mt. Kitanglad Range Trek', location: 'Impasug-ong, Bukidnon',
     rating: 4.9, reviews: 89, price: 3500, category: 'Adventures',
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800',
+    imageUrl: images[1], images: images,
     lat: 8.132, lng: 124.918, isTrending: true, sponsorshipTier: 'Major',
+    capacity: { type: 'Group Size', value: 12, unit: 'pax' },
     ...commonDetails,
     priceBreakdown: [{ item: "Permit Fee", amount: 1000 }, { item: "Guide Fee (2 Days)", amount: 2000 }, { item: "Porter (10kg)", amount: 500 }]
   },
   {
     id: '3', title: 'Kampo Juan', location: 'Manolo Fortich, Bukidnon',
     rating: 4.6, reviews: 120, price: 800, category: 'Experientials',
-    imageUrl: 'https://images.unsplash.com/photo-1595964267468-d731885f8386?auto=format&fit=crop&w=800',
+    imageUrl: images[2], images: images,
     lat: 8.358, lng: 124.821, sponsorshipTier: 'Minor',
+    capacity: { type: 'Slots', value: 30 },
     ...commonDetails
   },
   {
     id: '4', title: 'Monastery of Transfiguration', location: 'Malaybalay, Bukidnon',
     rating: 4.9, reviews: 450, price: 0, category: 'Immersions',
-    imageUrl: 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800',
+    imageUrl: images[3], images: images,
     lat: 8.114, lng: 125.127,
+    capacity: { type: 'Capacity', value: 'Open' },
     ...commonDetails,
     priceBreakdown: [{ item: "Donation (Optional)", amount: 0 }]
   },
@@ -141,6 +151,7 @@ export const mockListings: Listing[] = [
     rating: 5.0, reviews: 1200, price: 500, category: 'Events',
     imageUrl: 'https://images.unsplash.com/photo-1589985236891-5cb317867dc8?auto=format&fit=crop&w=800',
     lat: 8.155, lng: 125.132, isTrending: true, sponsorshipTier: 'Major',
+    capacity: { type: 'Slots', value: 500 },
     ...commonDetails
   },
   {
@@ -148,6 +159,7 @@ export const mockListings: Listing[] = [
     rating: 4.7, reviews: 67, price: 1200, category: 'Riders',
     imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800',
     lat: 8.356, lng: 125.021, isNew: true, sponsorshipTier: 'Minor',
+    capacity: { type: 'Capacity', value: 50, unit: 'Riders' },
     ...commonDetails
   },
   {
@@ -155,6 +167,7 @@ export const mockListings: Listing[] = [
     rating: 4.8, reviews: 210, price: 300, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1516934024742-b461fba47600?auto=format&fit=crop&w=800',
     lat: 8.283, lng: 125.067,
+    capacity: { type: 'Capacity', value: 100 },
     ...commonDetails
   },
 
@@ -164,6 +177,7 @@ export const mockListings: Listing[] = [
     rating: 4.7, reviews: 890, price: 1000, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1572331165267-854da2b00dc3?auto=format&fit=crop&w=800',
     lat: 8.514, lng: 124.597, isTrending: true, sponsorshipTier: 'Major',
+    capacity: { type: 'Slots', value: 200 },
     ...commonDetails
   },
   {
@@ -171,6 +185,7 @@ export const mockListings: Listing[] = [
     rating: 4.6, reviews: 340, price: 100, category: 'Riders',
     imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800',
     lat: 8.650, lng: 124.917,
+    capacity: { type: 'Capacity', value: 50, unit: 'Bikes' },
     ...commonDetails
   },
   {
@@ -178,6 +193,7 @@ export const mockListings: Listing[] = [
     rating: 4.8, reviews: 560, price: 1500, category: 'Eats',
     imageUrl: 'https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&w=800',
     lat: 8.423, lng: 124.662, sponsorshipTier: 'Minor',
+    capacity: { type: 'Seats', value: 40 },
     ...commonDetails
   },
   {
@@ -185,6 +201,7 @@ export const mockListings: Listing[] = [
     rating: 4.5, reviews: 120, price: 2500, category: 'Stays',
     imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800',
     lat: 8.917, lng: 125.033,
+    capacity: { type: 'Room Size', value: 35, unit: 'sqm' },
     ...commonDetails
   },
   {
@@ -192,6 +209,7 @@ export const mockListings: Listing[] = [
     rating: 4.9, reviews: 45, price: 0, category: 'Voluntourism',
     imageUrl: 'https://images.unsplash.com/photo-1464582883107-8adf2dca8a9f?auto=format&fit=crop&w=800',
     lat: 8.520, lng: 124.580, isNew: true,
+    capacity: { type: 'Slots', value: 50 },
     ...commonDetails
   },
   {
@@ -199,6 +217,7 @@ export const mockListings: Listing[] = [
     rating: 4.4, reviews: 88, price: 500, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800',
     lat: 8.490, lng: 124.310,
+    capacity: { type: 'Slots', value: 20 },
     ...commonDetails
   },
 
@@ -208,6 +227,7 @@ export const mockListings: Listing[] = [
     rating: 4.9, reviews: 670, price: 100, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800',
     lat: 8.158, lng: 124.187, isTrending: true, sponsorshipTier: 'Major',
+    capacity: { type: 'Slots', value: 100 },
     ...commonDetails
   },
   {
@@ -215,6 +235,7 @@ export const mockListings: Listing[] = [
     rating: 4.8, reviews: 540, price: 100, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1533423797697-39d671295e26?auto=format&fit=crop&w=800',
     lat: 8.183, lng: 124.192,
+    capacity: { type: 'Slots', value: 100 },
     ...commonDetails
   },
   {
@@ -222,6 +243,7 @@ export const mockListings: Listing[] = [
     rating: 5.0, reviews: 12, price: 0, category: 'For a cause',
     imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800',
     lat: 7.980, lng: 124.050, isNew: true,
+    capacity: { type: 'Slots', value: 20 },
     ...commonDetails
   },
 
@@ -231,6 +253,7 @@ export const mockListings: Listing[] = [
     rating: 4.6, reviews: 90, price: 200, category: 'Experientials',
     imageUrl: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=800',
     lat: 8.080, lng: 123.750, sponsorshipTier: 'Minor',
+    capacity: { type: 'Capacity', value: 50 },
     ...commonDetails
   },
   {
@@ -238,6 +261,7 @@ export const mockListings: Listing[] = [
     rating: 4.5, reviews: 230, price: 50, category: 'Immersions',
     imageUrl: 'https://images.unsplash.com/photo-1599592237996-2679dc651475?auto=format&fit=crop&w=800',
     lat: 8.140, lng: 123.840,
+    capacity: { type: 'Capacity', value: 'Open' },
     ...commonDetails
   },
   {
@@ -245,6 +269,7 @@ export const mockListings: Listing[] = [
     rating: 4.8, reviews: 30, price: 1000, category: 'Adventures',
     imageUrl: 'https://images.unsplash.com/photo-1439853949127-fa647821eba0?auto=format&fit=crop&w=800',
     lat: 8.283, lng: 123.633, isNew: true,
+    capacity: { type: 'Slots', value: 10 },
     ...commonDetails
   },
   {
@@ -252,6 +277,7 @@ export const mockListings: Listing[] = [
     rating: 4.3, reviews: 150, price: 300, category: 'Stays',
     imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800',
     lat: 8.280, lng: 123.800,
+    capacity: { type: 'Room Size', value: 25, unit: 'sqm' },
     ...commonDetails
   },
 ];

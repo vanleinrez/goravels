@@ -40,6 +40,9 @@ export interface Post {
 
 export interface User {
   name: string;
+  nickname?: string;
+  email?: string;
+  phone?: string;
   avatarUrl: string;
   tier: 'Nomad' | 'Explorer' | 'Legend' | 'Guest'; // Keeping legacy tier for compatibility
   level: UserLevel;
@@ -66,6 +69,7 @@ export interface Listing {
   reviews: number;
   price: number;
   imageUrl: string;
+  images?: string[]; // Multiple images for carousel
   category: ListingCategory;
   lat: number;
   lng: number;
@@ -92,6 +96,13 @@ export interface Listing {
   itinerary?: { time: string; activity: string }[];
   refundPolicy?: string;
   priceBreakdown?: { item: string; amount: number }[];
+  
+  // Specific Capacity Metrics
+  capacity?: {
+    type: 'Room Size' | 'Capacity' | 'Group Size' | 'Slots' | 'Seats';
+    value: string | number;
+    unit?: string;
+  };
 }
 
 export interface SafetyZone {
@@ -136,4 +147,11 @@ export interface Traveler {
   badges: Badge[];
   isOnline: boolean;
   distance?: string;
+}
+
+export interface PaymentMethod {
+    id: string;
+    name: string;
+    icon: string; // URL or icon name
+    feePercentage: number;
 }

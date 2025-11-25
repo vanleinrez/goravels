@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { User, UserStatus, Notification } from '../types';
 import Icon from '../components/Icon';
 
@@ -63,15 +63,25 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
   // Edit Profile State
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editForm, setEditForm] = useState({
-      nickname: 'Maj',
+      nickname: user.nickname || 'Maj',
       fullname: user.name,
-      phone: '+63 912 345 6789',
+      phone: user.phone || '+63 912 345 6789',
       location: user.location || '',
       country: 'Philippines',
-      province: 'Misamis Oriental',
-      city: 'Cagayan de Oro'
+      province: user.location?.split(',')[1]?.trim() || 'Misamis Oriental',
+      city: user.location?.split(',')[0]?.trim() || 'Cagayan de Oro'
   });
   const [otpSent, setOtpSent] = useState(false);
+
+  useEffect(() => {
+    setEditForm(prev => ({
+        ...prev,
+        nickname: user.nickname || prev.nickname,
+        fullname: user.name,
+        phone: user.phone || prev.phone,
+        location: user.location || prev.location
+    }));
+  }, [user]);
 
   // Bio Editing
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -380,7 +390,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
           )}
 
           <div className="mt-3 text-center">
-            <h1 className="text-xl font-bold text-stone-800">{editForm.nickname}</h1>
+            <h1 className="text-xl font-bold text-stone-800">{user.nickname || editForm.nickname}</h1>
             <p className="text-xs text-stone-500">{editForm.city}, {editForm.province}</p>
             
             {/* Current Status Display */}
@@ -590,9 +600,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
                 <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
                     <h3 className="font-bold text-stone-800 mb-4">Preferences</h3>
                     <div className="flex flex-wrap gap-2">
-                        {['Beach', 'Coffee', 'Hiking', 'Local Food', 'Photography'].map(p => (
+                        {user.preferences?.length ? user.preferences.map(p => (
                             <span key={p} className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">{p}</span>
-                        ))}
+                        )) : (
+                            ['Beach', 'Coffee', 'Hiking', 'Local Food', 'Photography'].map(p => (
+                                <span key={p} className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">{p}</span>
+                            ))
+                        )}
                         <button className="px-3 py-1 border border-dashed border-emerald-300 text-emerald-600 text-xs font-bold rounded-full hover:bg-emerald-50">+ Add</button>
                     </div>
                 </div>

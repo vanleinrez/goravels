@@ -32,6 +32,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({ activeTrip, onClose, is
       setSosPressTimer((prev) => {
         if (prev >= 100) {
           if (sosIntervalRef.current) clearInterval(sosIntervalRef.current);
+          onSosStateChange(true); // Set Global Active State
           setShowSosModal(true);
           return 100;
         }

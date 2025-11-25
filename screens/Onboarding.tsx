@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Icon from '../components/Icon';
 import { AuthStep } from '../App';
@@ -471,7 +472,31 @@ export const RoleSelectionScreen: React.FC<{
 }
 
 // --- Traveler Registration Screen ---
-export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+export const TravelerRegistrationScreen: React.FC<{ onComplete: (data: any) => void }> = ({ onComplete }) => {
+  const [formData, setFormData] = useState({
+    nickname: '',
+    fullName: '',
+    birthday: '',
+    nationality: '',
+    province: '',
+    gender: 'Prefer not to say',
+    interests: [] as string[],
+    socialGroup: 'None / Prefer not to say'
+  });
+
+  const handleChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleInterest = (interest: string) => {
+      setFormData(prev => {
+          const interests = prev.interests.includes(interest) 
+            ? prev.interests.filter(i => i !== interest)
+            : [...prev.interests, interest];
+          return { ...prev, interests };
+      });
+  };
+
   return (
     <div className="h-full bg-stone-50 flex flex-col animate-slide-in-right">
       <div className="bg-white px-6 py-4 border-b border-stone-200 sticky top-0 z-10">
@@ -482,17 +507,49 @@ export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = 
          <div className="space-y-6">
             <h2 className="font-bold text-lg text-stone-800">Basic Details</h2>
             <div className="space-y-3">
-              <Input label="Nickname" placeholder="What should we call you?" />
-              <Input label="Full Name" placeholder="Juan Dela Cruz" />
-              <Input label="Birthday" type="date" />
-              <Input label="Nationality" placeholder="Filipino" />
-              <Input label="State / Province" placeholder="Bukidnon" />
+              <Input 
+                label="Nickname" 
+                placeholder="What should we call you?" 
+                value={formData.nickname}
+                onChange={(e) => handleChange('nickname', e.target.value)}
+              />
+              <Input 
+                label="Full Name" 
+                placeholder="Juan Dela Cruz" 
+                value={formData.fullName}
+                onChange={(e) => handleChange('fullName', e.target.value)}
+              />
+              <Input 
+                label="Birthday" 
+                type="date" 
+                value={formData.birthday}
+                onChange={(e) => handleChange('birthday', e.target.value)}
+              />
+              <Input 
+                label="Nationality" 
+                placeholder="Filipino" 
+                value={formData.nationality}
+                onChange={(e) => handleChange('nationality', e.target.value)}
+              />
+              <Input 
+                label="State / Province" 
+                placeholder="Bukidnon" 
+                value={formData.province}
+                onChange={(e) => handleChange('province', e.target.value)}
+              />
               <div>
                   <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Gender</label>
                   <div className="flex space-x-3">
                       {['Male', 'Female', 'Prefer not to say'].map(g => (
                         <label key={g} className="flex items-center px-3 py-2 border rounded-lg bg-white">
-                           <input type="radio" name="gender" className="mr-2" /> <span className="text-sm">{g}</span>
+                           <input 
+                              type="radio" 
+                              name="gender" 
+                              className="mr-2" 
+                              checked={formData.gender === g}
+                              onChange={() => handleChange('gender', g)}
+                           /> 
+                           <span className="text-sm">{g}</span>
                         </label>
                       ))}
                   </div>
@@ -510,8 +567,14 @@ export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = 
                    'Adventure', 'Outdoor Sports', 'Foods', 
                    'Transportation', 'Events', 'For a Cause', 'Volunteer'
                  ].map(interest => (
-                    <label key={interest} className="inline-flex items-center px-3 py-1.5 rounded-full border bg-white cursor-pointer hover:bg-emerald-50 hover:border-emerald-200">
-                        <input type="checkbox" className="mr-2" /> <span className="text-sm">{interest}</span>
+                    <label key={interest} className={`inline-flex items-center px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${formData.interests.includes(interest) ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-white hover:bg-emerald-50 hover:border-emerald-200'}`}>
+                        <input 
+                            type="checkbox" 
+                            className="mr-2 hidden" 
+                            checked={formData.interests.includes(interest)}
+                            onChange={() => toggleInterest(interest)}
+                        /> 
+                        <span className="text-sm">{interest}</span>
                     </label>
                  ))}
               </div>
@@ -531,7 +594,13 @@ export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = 
                     'None / Prefer not to say'
                   ].map((group, idx) => (
                      <label key={idx} className="flex items-start p-3 border rounded-xl bg-white">
-                        <input type="radio" name="socialGroup" className="mt-1 mr-3" />
+                        <input 
+                            type="radio" 
+                            name="socialGroup" 
+                            className="mt-1 mr-3" 
+                            checked={formData.socialGroup === group}
+                            onChange={() => handleChange('socialGroup', group)}
+                        />
                         <span className="text-sm text-stone-700">{group}</span>
                      </label>
                   ))}
@@ -548,7 +617,7 @@ export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = 
       </div>
 
       <div className="p-4 bg-white border-t border-stone-200">
-         <button onClick={onComplete} className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
+         <button onClick={() => onComplete(formData)} className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
             Submit Registration
          </button>
       </div>
@@ -556,13 +625,21 @@ export const TravelerRegistrationScreen: React.FC<{ onComplete: () => void }> = 
   );
 }
 
-const Input: React.FC<{ label: string; placeholder?: string; type?: string }> = ({ label, placeholder, type = 'text' }) => (
+const Input: React.FC<{ 
+    label: string; 
+    placeholder?: string; 
+    type?: string; 
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}> = ({ label, placeholder, type = 'text', value, onChange }) => (
   <div>
       <label className="block text-xs font-bold text-stone-600 uppercase mb-2">{label}</label>
       <input 
           type={type} 
           className="w-full p-3 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" 
           placeholder={placeholder} 
+          value={value}
+          onChange={onChange}
       />
   </div>
 );

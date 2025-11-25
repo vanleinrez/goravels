@@ -1,13 +1,55 @@
+
 import React, { useState } from 'react';
 import Icon from '../components/Icon';
 
 interface HostRegistrationProps {
-  onComplete: () => void;
+  onComplete: (data: any) => void;
 }
+
+const Input: React.FC<{ 
+    label: string; 
+    placeholder?: string; 
+    type?: string; 
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}> = ({ label, placeholder, type = 'text', value, onChange }) => (
+  <div>
+      <label className="block text-xs font-bold text-stone-600 uppercase mb-2">{label}</label>
+      <input 
+          type={type} 
+          className="w-full p-3 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" 
+          placeholder={placeholder} 
+          value={value}
+          onChange={onChange}
+      />
+  </div>
+);
 
 const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [contactMethod, setContactMethod] = useState<'Call' | 'Email' | 'Text'>('Email');
+  
+  // Form State
+  const [formData, setFormData] = useState({
+      email: '',
+      nickname: '',
+      firstName: '',
+      familyName: '',
+      dob: '',
+      gender: 'Prefer not to say',
+      address: '',
+      isLicensed: 'No',
+      interestedInLicense: 'No',
+      hostingType: '',
+      description: '',
+      cost: '',
+      phone: '',
+      socialLink: ''
+  });
+
+  const handleChange = (field: string, value: any) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const nextStep = () => setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
@@ -53,7 +95,7 @@ const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete })
         </div>
 
         <button 
-            onClick={onComplete}
+            onClick={() => onComplete(formData)}
             className="w-full py-4 bg-stone-900 text-white font-bold rounded-xl shadow-lg"
         >
             Go to Hosting Dashboard
@@ -79,22 +121,31 @@ const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete })
                 </div>
 
                 <div className="space-y-4">
-                    <Input label="Email Address *" type="email" placeholder="host@example.com" />
-                    <Input label="Nickname *" placeholder="e.g. Kuya Jo" />
-                    <Input label="First Name *" placeholder="Juan" />
-                    <Input label="Family Name *" placeholder="Dela Cruz" />
-                    <Input label="Date of Birth *" type="date" />
+                    <Input label="Email Address *" type="email" placeholder="host@example.com" value={formData.email} onChange={e => handleChange('email', e.target.value)} />
+                    <Input label="Nickname *" placeholder="e.g. Kuya Jo" value={formData.nickname} onChange={e => handleChange('nickname', e.target.value)} />
+                    <Input label="First Name *" placeholder="Juan" value={formData.firstName} onChange={e => handleChange('firstName', e.target.value)} />
+                    <Input label="Family Name *" placeholder="Dela Cruz" value={formData.familyName} onChange={e => handleChange('familyName', e.target.value)} />
+                    <Input label="Date of Birth *" type="date" value={formData.dob} onChange={e => handleChange('dob', e.target.value)} />
                     
                     <div>
                         <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Gender</label>
                         <div className="flex space-x-4">
-                            <label className="flex items-center"><input type="radio" name="gender" className="mr-2" /> Male</label>
-                            <label className="flex items-center"><input type="radio" name="gender" className="mr-2" /> Female</label>
-                            <label className="flex items-center"><input type="radio" name="gender" className="mr-2" /> Prefer not to say</label>
+                            {['Male', 'Female', 'Prefer not to say'].map(g => (
+                                <label key={g} className="flex items-center">
+                                    <input 
+                                        type="radio" 
+                                        name="gender" 
+                                        className="mr-2"
+                                        checked={formData.gender === g}
+                                        onChange={() => handleChange('gender', g)}
+                                    /> 
+                                    {g}
+                                </label>
+                            ))}
                         </div>
                     </div>
 
-                    <Input label="Mailing Address *" placeholder="Complete address (e.g. Utility Bill)" />
+                    <Input label="Mailing Address *" placeholder="Complete address" value={formData.address} onChange={e => handleChange('address', e.target.value)} />
                 </div>
             </div>
         )}
@@ -110,8 +161,12 @@ const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete })
                     <div>
                         <label className="block text-sm font-bold text-stone-700 mb-3">Are you a licensed tour guide? *</label>
                         <div className="space-y-2">
-                            <label className="flex items-center p-3 border rounded-xl bg-white"><input type="radio" name="license" className="mr-3 h-5 w-5 text-emerald-600" /> Yes</label>
-                            <label className="flex items-center p-3 border rounded-xl bg-white"><input type="radio" name="license" className="mr-3 h-5 w-5 text-emerald-600" /> No</label>
+                            <label className="flex items-center p-3 border rounded-xl bg-white">
+                                <input type="radio" name="license" className="mr-3 h-5 w-5 text-emerald-600" checked={formData.isLicensed === 'Yes'} onChange={() => handleChange('isLicensed', 'Yes')} /> Yes
+                            </label>
+                            <label className="flex items-center p-3 border rounded-xl bg-white">
+                                <input type="radio" name="license" className="mr-3 h-5 w-5 text-emerald-600" checked={formData.isLicensed === 'No'} onChange={() => handleChange('isLicensed', 'No')} /> No
+                            </label>
                         </div>
                     </div>
 
@@ -125,8 +180,8 @@ const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete })
                      <div>
                         <label className="block text-sm font-bold text-stone-700 mb-3">If no, are you interested to get a license?</label>
                         <div className="flex space-x-4">
-                            <label className="flex items-center"><input type="radio" name="interest" className="mr-2" /> Yes</label>
-                            <label className="flex items-center"><input type="radio" name="interest" className="mr-2" /> No</label>
+                            <label className="flex items-center"><input type="radio" name="interest" className="mr-2" checked={formData.interestedInLicense === 'Yes'} onChange={() => handleChange('interestedInLicense', 'Yes')} /> Yes</label>
+                            <label className="flex items-center"><input type="radio" name="interest" className="mr-2" checked={formData.interestedInLicense === 'No'} onChange={() => handleChange('interestedInLicense', 'No')} /> No</label>
                         </div>
                     </div>
                 </div>
@@ -153,116 +208,85 @@ const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete })
                             'Rural Rides (Motorcycle, Boat rental)'
                         ].map((type, i) => (
                             <label key={i} className="flex items-start p-3 border border-stone-200 rounded-xl bg-white active:bg-stone-50">
-                                <input type="radio" name="hostingType" className="mt-1 mr-3 h-4 w-4 text-emerald-600" />
+                                <input 
+                                    type="radio" 
+                                    name="hostingType" 
+                                    className="mt-1 mr-3 h-4 w-4 text-emerald-600" 
+                                    checked={formData.hostingType === type}
+                                    onChange={() => handleChange('hostingType', type)}
+                                />
                                 <span className="text-sm text-stone-700">{type}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
-                <div>
-                     <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Photos/Videos (Min 10) *</label>
-                     <div className="grid grid-cols-3 gap-2">
-                         <div className="aspect-square bg-emerald-50 rounded-lg flex items-center justify-center border border-emerald-200 text-emerald-600">
-                             <Icon className="w-6 h-6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Icon>
-                         </div>
-                         {[1,2,3].map(i => (
-                             <div key={i} className="aspect-square bg-stone-200 rounded-lg"></div>
-                         ))}
-                     </div>
-                </div>
+                <Input label="Short Description of Offering" placeholder="e.g. Guided trek to Mt. Kitanglad" value={formData.description} onChange={e => handleChange('description', e.target.value)} />
+                <Input label="Estimated Cost per Person (PHP)" type="number" placeholder="e.g. 1500" value={formData.cost} onChange={e => handleChange('cost', e.target.value)} />
              </div>
         )}
 
         {step === 4 && (
              <div className="space-y-6 animate-fade-in">
-                 <div className="mb-2">
-                    <h2 className="text-xl font-bold text-stone-800">Details & Location</h2>
-                    <p className="text-sm text-stone-500">Where and what is it?</p>
+                <div className="mb-2">
+                    <h2 className="text-xl font-bold text-stone-800">Contacts</h2>
+                    <p className="text-sm text-stone-500">How can we reach you?</p>
                 </div>
 
-                <div>
-                    <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Google Map Location *</label>
-                    <div className="h-40 bg-stone-200 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
-                        <img src="https://picsum.photos/seed/map/400/200" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-                        <button className="relative bg-white px-4 py-2 rounded-lg shadow-md text-sm font-bold text-emerald-700 flex items-center">
-                            <Icon className="w-4 h-4 mr-2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>
-                            Set Pin Location
-                        </button>
+                <div className="space-y-4">
+                    <Input label="Mobile Number *" type="tel" placeholder="0912 345 6789" value={formData.phone} onChange={e => handleChange('phone', e.target.value)} />
+                    <Input label="Facebook / Social Link" placeholder="facebook.com/yourpage" value={formData.socialLink} onChange={e => handleChange('socialLink', e.target.value)} />
+                    
+                    <div className="bg-stone-100 p-4 rounded-xl text-xs text-stone-600">
+                        <p className="font-bold mb-1">Privacy Note:</p>
+                        Your contact details will be shared with the Gora team for verification purposes only. Once verified, you can choose what to display on your public profile.
                     </div>
-                </div>
-
-                <div>
-                     <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Description *</label>
-                     <textarea rows={5} className="w-full p-4 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none text-sm" placeholder="Tell us about your offer, amenities, nearby attractions..." />
-                </div>
-
-                <div>
-                     <label className="block text-xs font-bold text-stone-600 uppercase mb-2">Languages Spoken</label>
-                     <div className="flex flex-wrap gap-2">
-                         {['English', 'Filipino', 'Cebuano', 'Ilocano'].map(lang => (
-                             <label key={lang} className="inline-flex items-center px-3 py-1 rounded-full border bg-white">
-                                 <input type="checkbox" className="mr-2" /> <span className="text-sm">{lang}</span>
-                             </label>
-                         ))}
-                     </div>
                 </div>
              </div>
         )}
 
         {step === 5 && (
              <div className="space-y-6 animate-fade-in">
-                 <div className="mb-2">
-                    <h2 className="text-xl font-bold text-stone-800">Finalize</h2>
-                    <p className="text-sm text-stone-500">Almost there!</p>
+                <div className="mb-2">
+                    <h2 className="text-xl font-bold text-stone-800">Review</h2>
+                    <p className="text-sm text-stone-500">Please confirm your details.</p>
                 </div>
 
-                <Input label="Cost of Hosting Offer (PHP) *" type="number" placeholder="1000" />
-                
-                <div className="bg-stone-100 p-4 rounded-xl space-y-4">
-                     <h3 className="font-bold text-stone-700">Contact Information</h3>
-                     <Input label="Phone Number *" placeholder="+63 900 000 0000" />
-                     <Input label="Social Media Link" placeholder="facebook.com/..." />
+                <div className="bg-white border border-stone-200 rounded-xl p-4 space-y-3 text-sm">
+                    <div className="flex justify-between"><span className="text-stone-500">Name</span> <span className="font-bold">{formData.firstName} {formData.familyName}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-500">Email</span> <span className="font-bold">{formData.email}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-500">Phone</span> <span className="font-bold">{formData.phone}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-500">Type</span> <span className="font-bold text-emerald-600 text-right w-1/2">{formData.hostingType}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-500">Licensed?</span> <span className="font-bold">{formData.isLicensed}</span></div>
                 </div>
 
-                <div className="flex items-start p-4 bg-emerald-50 rounded-xl">
+                <div className="flex items-start p-3 bg-emerald-50 rounded-xl border border-emerald-100">
                     <input type="checkbox" className="mt-1 mr-3 h-5 w-5 text-emerald-600" />
-                    <p className="text-sm text-stone-700">
-                        I read and agree to TaraGo's <span className="text-emerald-600 underline font-bold">Terms and Privacy Policy</span>. I certify that the information provided is true and correct.
-                    </p>
+                    <p className="text-xs text-stone-700">I certify that the information provided is true and correct. I agree to the <span className="font-bold text-emerald-700">Host Terms & Conditions</span>.</p>
                 </div>
              </div>
         )}
-
       </div>
 
-      {/* Footer Nav */}
-      <div className="p-4 bg-white border-t border-stone-200 flex justify-between">
-        {step > 1 ? (
-             <button onClick={prevStep} className="px-6 py-3 text-stone-500 font-bold">Back</button>
-        ) : (
-            <div></div>
+      {/* Footer Navigation */}
+      <div className="p-4 bg-white border-t border-stone-200 flex space-x-3">
+        {step > 1 && (
+            <button onClick={prevStep} className="flex-1 py-3 border border-stone-300 text-stone-600 font-bold rounded-xl">
+                Back
+            </button>
         )}
-        
         {step < 5 ? (
-            <button onClick={nextStep} className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-md">Next</button>
+            <button onClick={nextStep} className="flex-[2] py-3 bg-stone-900 text-white font-bold rounded-xl">
+                Next
+            </button>
         ) : (
-            <button onClick={nextStep} className="px-8 py-3 bg-stone-900 text-white rounded-xl font-bold shadow-md">Submit Application</button>
+            <button onClick={nextStep} className="flex-[2] py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
+                Submit Application
+            </button>
         )}
       </div>
     </div>
   );
 };
-
-const Input: React.FC<{ label: string; placeholder?: string; type?: string }> = ({ label, placeholder, type = 'text' }) => (
-    <div>
-        <label className="block text-xs font-bold text-stone-600 uppercase mb-2">{label}</label>
-        <input 
-            type={type} 
-            className="w-full p-3 rounded-xl border border-stone-200 bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" 
-            placeholder={placeholder} 
-        />
-    </div>
-);
 
 export default HostRegistrationScreen;
