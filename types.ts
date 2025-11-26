@@ -144,6 +144,18 @@ export interface Traveler {
   badges: Badge[];
   isOnline: boolean;
   distance?: string;
+  isSosActive?: boolean;
+  sosMessage?: string;
+  currentTrip?: {
+      id: string;
+      title: string;
+      itineraryStatus?: string;
+      coords?: { lat: number; lng: number };
+      host?: {
+          name: string;
+          avatar: string;
+      };
+  };
 }
 
 export interface PaymentMethod {

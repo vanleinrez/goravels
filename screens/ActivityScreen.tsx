@@ -164,7 +164,7 @@ const ActivityScreen: React.FC<ActivityScreenProps> = ({ activeTrip, onClose, is
               className="transition-all duration-75"
             />
           </svg>
-          <Icon className="w-8 h-8 font-bold"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></Icon>
+          <span className="font-black text-2xl tracking-tighter">SOS</span>
         </button>
         <p className={`text-[10px] font-bold text-center mt-2 bg-white/80 backdrop-blur rounded px-2 py-1 shadow-sm ${isSosActive ? 'text-red-600 animate-pulse' : 'text-red-600'}`}>
             {isSosActive ? 'SOS ACTIVE' : 'Hold 3s for SOS'}

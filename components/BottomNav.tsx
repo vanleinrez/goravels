@@ -34,15 +34,19 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon, isActive, onClick, isSpe
        );
     }
     
-    // SOS Active State: Flashing Red
+    // SOS Active State: Flashing Red with SOS Text
     if (isSosActive) {
         return (
           <button
             onClick={onClick}
-            className={`relative -top-6 bg-red-600 text-white p-4 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] border-4 border-white transform transition-all active:scale-95 animate-pulse`}
+            className={`relative -top-6 bg-red-600 text-white p-4 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.6)] border-4 border-white transform transition-all active:scale-95 animate-pulse flex items-center justify-center`}
             aria-label="SOS Active"
           >
-            {icon}
+            {/* SOS Text Graphic */}
+            <div className="w-7 h-7 flex items-center justify-center">
+               <span className="font-black text-[10px] leading-none tracking-tighter">SOS</span>
+            </div>
+            
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
@@ -105,7 +109,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen, is
              </Icon>
           }
         />
-        {/* Go / Paw Button */}
+        {/* Go / Paw / SOS Button */}
         <NavItem
           label="" 
           isActive={false}

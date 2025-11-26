@@ -2,16 +2,18 @@
 import React, { useState } from 'react';
 import { mockTravelers, mockPosts, mockBadges } from '../constants';
 import Icon from '../components/Icon';
-import type { Badge, UserLevel, UserStatus } from '../types';
+import type { Badge, UserLevel, UserStatus, Traveler } from '../types';
 
 const ConnectScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Feed' | 'Travelers'>('Feed');
+  const [selectedTraveler, setSelectedTraveler] = useState<Traveler | null>(null);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
 
+  // Badge Modal
   const renderBadgeModal = () => {
     if (!selectedBadge) return null;
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in" onClick={() => setSelectedBadge(null)}>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-fade-in" onClick={() => setSelectedBadge(null)}>
         <div className="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl transform scale-100" onClick={e => e.stopPropagation()}>
           <div className="flex flex-col items-center text-center">
             <img src={selectedBadge.imageUrl} alt={selectedBadge.name} className="w-24 h-24 mb-4" />
@@ -23,6 +25,125 @@ const ConnectScreen: React.FC = () => {
         </div>
       </div>
     );
+  };
+
+  // Traveler Profile & SOS Details Modal
+  const renderTravelerProfileModal = () => {
+      if (!selectedTraveler) return null;
+      const hasAccess = !!selectedTraveler.distance; // Mock logic: access if nearby/distance is known
+
+      return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 bg-black/60 pointer-events-auto backdrop-blur-sm transition-opacity" onClick={() => setSelectedTraveler(null)}></div>
+              
+              <div className="bg-white w-full h-[85vh] sm:h-auto sm:max-w-md sm:rounded-2xl shadow-2xl pointer-events-auto relative animate-slide-in-right flex flex-col overflow-hidden transition-all duration-300">
+                  
+                  {/* Header */}
+                  <div className="relative bg-stone-100 h-32 flex-shrink-0">
+                      {selectedTraveler.isSosActive && (
+                          <div className="absolute inset-0 bg-red-600/90 flex items-center justify-center animate-pulse z-10">
+                              <div className="text-white text-center">
+                                  <Icon className="w-12 h-12 mx-auto mb-1"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></Icon>
+                                  <h2 className="font-black text-xl tracking-widest">SOS ACTIVE</h2>
+                              </div>
+                          </div>
+                      )}
+                      <button onClick={() => setSelectedTraveler(null)} className="absolute top-4 right-4 bg-black/20 p-2 rounded-full text-white hover:bg-black/30 z-20">
+                          <Icon className="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>
+                      </button>
+                  </div>
+
+                  <div className="px-6 -mt-12 relative flex-shrink-0">
+                      <div className="flex justify-between items-end">
+                          <img src={selectedTraveler.avatarUrl} className={`w-24 h-24 rounded-full border-4 ${selectedTraveler.isSosActive ? 'border-red-500' : 'border-white'} shadow-md bg-white`} />
+                          <div className="mb-2 text-right">
+                              <LevelBadge level={selectedTraveler.level} />
+                              <p className="text-xs text-stone-500 font-bold mt-1">{selectedTraveler.totalTrips} Trips</p>
+                          </div>
+                      </div>
+                      <h2 className="text-2xl font-bold text-stone-800 mt-3">{selectedTraveler.name}</h2>
+                      <p className="text-stone-500 text-sm">@{selectedTraveler.nickname}</p>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+                      
+                      {/* SOS Message Section */}
+                      {selectedTraveler.isSosActive && (
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                              <h3 className="font-bold text-red-700 text-sm mb-1 flex items-center">
+                                  <Icon className="w-4 h-4 mr-2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></Icon>
+                                  Emergency Status
+                              </h3>
+                              <p className="text-red-600 text-xs leading-relaxed font-medium">
+                                  "{selectedTraveler.sosMessage}"
+                              </p>
+                              <div className="mt-3 flex space-x-2">
+                                  <button className="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-bold shadow-sm">Contact Authorities</button>
+                                  <button className="flex-1 bg-white border border-red-200 text-red-600 py-2 rounded-lg text-xs font-bold">Message</button>
+                              </div>
+                          </div>
+                      )}
+
+                      {/* Journey Itinerary & Host Info (Visible if Nearby/Follower) */}
+                      {hasAccess && selectedTraveler.currentTrip ? (
+                          <>
+                              <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
+                                  <h3 className="font-bold text-stone-800 text-sm mb-3 flex items-center">
+                                      <Icon className="w-4 h-4 mr-2 text-emerald-600"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></Icon>
+                                      Current Journey
+                                  </h3>
+                                  <div className="space-y-3">
+                                      <div>
+                                          <p className="text-xs text-stone-500 font-bold uppercase">Activity</p>
+                                          <p className="font-bold text-stone-800">{selectedTraveler.currentTrip.title}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-xs text-stone-500 font-bold uppercase">Status</p>
+                                          <span className="inline-block bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded font-bold mt-1">
+                                              {selectedTraveler.currentTrip.itineraryStatus}
+                                          </span>
+                                      </div>
+                                      {selectedTraveler.currentTrip.coords && (
+                                          <div>
+                                              <p className="text-xs text-stone-500 font-bold uppercase">GPS Location</p>
+                                              <div className="flex items-center justify-between bg-stone-50 p-2 rounded-lg mt-1 border border-stone-100">
+                                                  <code className="text-xs text-stone-600 font-mono">
+                                                      {selectedTraveler.currentTrip.coords.lat.toFixed(4)}, {selectedTraveler.currentTrip.coords.lng.toFixed(4)}
+                                                  </code>
+                                                  <button className="text-xs font-bold text-blue-600 flex items-center">
+                                                      <Icon className="w-3 h-3 mr-1"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /></Icon>
+                                                      View Map
+                                                  </button>
+                                              </div>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+
+                              {selectedTraveler.currentTrip.host && (
+                                  <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm flex items-center space-x-3">
+                                      <img src={selectedTraveler.currentTrip.host.avatar} className="w-10 h-10 rounded-full object-cover" />
+                                      <div>
+                                          <p className="text-xs text-stone-500 font-bold uppercase">Guided By</p>
+                                          <p className="font-bold text-stone-800 text-sm">{selectedTraveler.currentTrip.host.name}</p>
+                                      </div>
+                                      <button className="ml-auto text-stone-400 hover:text-emerald-600">
+                                          <Icon className="w-5 h-5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></Icon>
+                                      </button>
+                                  </div>
+                              )}
+                          </>
+                      ) : (
+                          <div className="text-center py-8 text-stone-400">
+                              <Icon className="w-12 h-12 mx-auto mb-2 opacity-50"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></Icon>
+                              <p className="text-sm">Journey details hidden.</p>
+                              <p className="text-xs">Connect or get closer to view activity.</p>
+                          </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      );
   };
 
   const LevelBadge: React.FC<{ level: UserLevel }> = ({ level }) => {
@@ -51,27 +172,45 @@ const ConnectScreen: React.FC = () => {
     return <span className={`w-3 h-3 border-2 border-white rounded-full absolute bottom-0 right-0 ${colors[status] || 'bg-gray-300'}`} title={status}></span>;
   };
 
-  const TravelerCard: React.FC<{ traveler: typeof mockTravelers[0], actionType?: 'Follow' | 'Nudge' }> = ({ traveler, actionType = 'Follow' }) => (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center justify-between mb-3">
+  const TravelerCard: React.FC<{ traveler: Traveler, actionType?: 'Follow' | 'Nudge' }> = ({ traveler, actionType = 'Follow' }) => (
+    <div 
+        onClick={() => setSelectedTraveler(traveler)}
+        className={`bg-white p-4 rounded-2xl shadow-sm border flex items-center justify-between mb-3 cursor-pointer active:scale-95 transition-all ${traveler.isSosActive ? 'border-red-300 ring-2 ring-red-100' : 'border-stone-100 hover:border-emerald-200'}`}
+    >
       <div className="flex items-center space-x-3 flex-1 min-w-0">
         <div className="relative flex-shrink-0">
           <img src={traveler.avatarUrl} alt={traveler.name} className="w-12 h-12 rounded-full object-cover" />
           <StatusDot status={traveler.status} />
+          
+          {/* SOS Indicator on Avatar */}
+          {traveler.isSosActive && (
+              <div className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 border-2 border-white animate-pulse shadow-md">
+                  <Icon className="w-3 h-3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></Icon>
+              </div>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center space-x-2">
-            <h3 className="font-bold text-stone-800 truncate">{traveler.nickname}</h3>
+            <h3 className={`font-bold truncate ${traveler.isSosActive ? 'text-red-600' : 'text-stone-800'}`}>
+                {traveler.nickname}
+            </h3>
             <LevelBadge level={traveler.level} />
           </div>
           
-          <div className="flex items-center text-xs text-stone-500 mt-0.5 space-x-2">
-            <span>{traveler.totalTrips} Trips</span>
-            {traveler.distance && <span className="flex items-center text-emerald-600"><Icon className="w-3 h-3 mr-0.5"><circle cx="12" cy="12" r="10"/></Icon> {traveler.distance}</span>}
-          </div>
+          {traveler.isSosActive ? (
+              <p className="text-[10px] font-bold text-red-500 flex items-center mt-0.5 animate-pulse">
+                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span> SOS ALERT
+              </p>
+          ) : (
+              <div className="flex items-center text-xs text-stone-500 mt-0.5 space-x-2">
+                <span>{traveler.totalTrips} Trips</span>
+                {traveler.distance && <span className="flex items-center text-emerald-600"><Icon className="w-3 h-3 mr-0.5"><circle cx="12" cy="12" r="10"/></Icon> {traveler.distance}</span>}
+              </div>
+          )}
 
           <div className="flex space-x-1 mt-1.5 overflow-x-auto scrollbar-hide">
              {traveler.badges.slice(0, 4).map(badge => (
-               <button key={badge.id} onClick={() => setSelectedBadge(badge)}>
+               <button key={badge.id} onClick={(e) => { e.stopPropagation(); setSelectedBadge(badge); }}>
                  <img src={badge.imageUrl} className="w-4 h-4 opacity-80 hover:scale-110 transition-transform" title={badge.name} />
                </button>
              ))}
@@ -79,7 +218,9 @@ const ConnectScreen: React.FC = () => {
         </div>
       </div>
       
-      <button className={`ml-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-transform active:scale-95 flex-shrink-0 ${
+      <button 
+        onClick={(e) => e.stopPropagation()} // Prevent triggering card click
+        className={`ml-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-transform active:scale-95 flex-shrink-0 ${
         actionType === 'Nudge' 
           ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' 
           : 'bg-stone-900 text-white hover:bg-stone-800'
@@ -92,6 +233,7 @@ const ConnectScreen: React.FC = () => {
   return (
     <div className="bg-stone-50 min-h-full pb-20">
       {renderBadgeModal()}
+      {renderTravelerProfileModal()}
 
       {/* Header / Tabs */}
       <div className="bg-white border-b border-stone-200 px-4 pt-4 pb-0 sticky top-0 z-20">
@@ -187,7 +329,7 @@ const ConnectScreen: React.FC = () => {
                       <Icon className="w-4 h-4 mr-1"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></Icon>
                       Nearby Travelers
                    </h2>
-                   {mockTravelers.filter(t => t.distance).map((traveler) => (
+                   {mockTravelers.filter(t => t.distance).sort((a,b) => (b.isSosActive ? 1 : 0) - (a.isSosActive ? 1 : 0)).map((traveler) => (
                        <TravelerCard key={traveler.id} traveler={traveler} />
                    ))}
                </div>
