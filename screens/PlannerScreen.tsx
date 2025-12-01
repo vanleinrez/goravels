@@ -11,6 +11,8 @@ interface PlannerProps {
   onToggleTrip: () => void;
   myTrips: Trip[];
   onAddTrip: (trip: Trip) => void;
+  activeTab?: 'MyTrip' | 'GroupChat';
+  onTabChange?: (tab: 'MyTrip' | 'GroupChat') => void;
 }
 
 // Mock Data for Group Planner
@@ -52,8 +54,12 @@ const INITIAL_MESSAGES: ChatMessage[] = [
     }
 ];
 
-const PlannerScreen: React.FC<PlannerProps> = ({ myTrips }) => {
-  const [activeTab, setActiveTab] = useState<'MyTrip' | 'GroupChat'>('MyTrip');
+const PlannerScreen: React.FC<PlannerProps> = ({ myTrips, activeTab: propActiveTab, onTabChange }) => {
+  const [internalActiveTab, setInternalActiveTab] = useState<'MyTrip' | 'GroupChat'>('MyTrip');
+  
+  // Use prop if available, otherwise internal state
+  const activeTab = propActiveTab !== undefined ? propActiveTab : internalActiveTab;
+  const setActiveTab = onTabChange || setInternalActiveTab;
   
   // Chat State
   const [activeChannel, setActiveChannel] = useState('general');
@@ -116,9 +122,10 @@ const PlannerScreen: React.FC<PlannerProps> = ({ myTrips }) => {
 
   const getMember = (id: string) => MOCK_MEMBERS.find(m => m.id === id);
 
-  // Get upcoming trip for backpack context
+  // Get upcoming trip for backpack context and chat enablement
   const upcomingTrip = myTrips.find(t => t.status === 'Upcoming');
   const pastTrips = myTrips.filter(t => t.status === 'Completed');
+  const isChatEnabled = !!upcomingTrip;
 
   return (
     <div className="h-full bg-stone-50 flex flex-col relative">
@@ -295,7 +302,7 @@ const PlannerScreen: React.FC<PlannerProps> = ({ myTrips }) => {
                               <div className="w-8 h-8 rounded bg-emerald-600 flex items-center justify-center font-bold text-white">B</div>
                               <div>
                                   <p className="text-xs font-bold text-white">Bukidnon Trip</p>
-                                  <p className="text-[10px] text-stone-400">4 Members</p>
+                                  <p className="text-xs text-stone-400">{isChatEnabled ? 'Active' : 'Ended'}</p>
                               </div>
                           </div>
                       </div>
@@ -309,6 +316,7 @@ const PlannerScreen: React.FC<PlannerProps> = ({ myTrips }) => {
                            </button>
                            <span className="text-stone-400 text-xl font-light mr-1">#</span>
                            <h2 className="font-bold text-stone-800">{activeChannel}</h2>
+                           {!isChatEnabled && <span className="ml-3 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">ENDED</span>}
                        </div>
                        <div className="flex -space-x-2">
                            {MOCK_MEMBERS.slice(0, 4).map(m => (
@@ -392,29 +400,36 @@ const PlannerScreen: React.FC<PlannerProps> = ({ myTrips }) => {
 
                   {/* Input Area */}
                   <div className="p-3 bg-white border-t border-stone-200">
-                       <div className="flex items-end space-x-2 bg-stone-100 p-2 rounded-xl">
-                           <button className="p-2 text-stone-400 hover:text-stone-600">
+                       <div className={`flex items-end space-x-2 bg-stone-100 p-2 rounded-xl ${!isChatEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                           <button disabled={!isChatEnabled} className="p-2 text-stone-400 hover:text-stone-600">
                                <Icon className="w-5 h-5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></Icon>
                            </button>
                            <textarea 
                               value={inputText}
                               onChange={e => setInputText(e.target.value)}
                               onKeyPress={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                              placeholder={`Message #${activeChannel}`}
-                              className="flex-1 bg-transparent border-none focus:ring-0 text-sm max-h-20 py-2 resize-none outline-none"
+                              placeholder={isChatEnabled ? `Message #${activeChannel}` : "Activity ended - Chat disabled"}
+                              disabled={!isChatEnabled}
+                              className="flex-1 bg-transparent border-none focus:ring-0 text-sm max-h-20 py-2 resize-none outline-none disabled:cursor-not-allowed"
                               rows={1}
                            />
                            <button 
                              onClick={handleSendMessage}
-                             disabled={!inputText.trim()}
-                             className={`p-2 rounded-lg transition-colors ${inputText.trim() ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-400'}`}
+                             disabled={!inputText.trim() || !isChatEnabled}
+                             className={`p-2 rounded-lg transition-colors ${inputText.trim() && isChatEnabled ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-400'}`}
                            >
                                <Icon className="w-4 h-4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Icon>
                            </button>
                        </div>
-                       <p className="text-[10px] text-center text-stone-400 mt-2">
-                           Tip: Ask <span className="font-bold text-emerald-600">@GoraAI</span> to calculate budgets.
-                       </p>
+                       {!isChatEnabled ? (
+                          <p className="text-[10px] text-center text-red-500 mt-2 font-bold">
+                              This trip has been completed. Messaging is disabled.
+                          </p>
+                       ) : (
+                          <p className="text-[10px] text-center text-stone-400 mt-2">
+                             Tip: Ask <span className="font-bold text-emerald-600">@GoraAI</span> to calculate budgets.
+                          </p>
+                       )}
                   </div>
               </div>
           )}

@@ -147,7 +147,7 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
     <div className="h-full flex flex-col bg-stone-50 animate-fade-in relative">
       
       {/* Top Banner / Hero Logo */}
-      <div className="pt-10 pb-8 flex flex-col items-center justify-center bg-white z-20 shadow-sm relative rounded-b-[2.5rem]">
+      <div className="pt-10 pb-8 flex flex-col items-center justify-center bg-white z-20 shadow-sm relative rounded-b-3xl">
           <div className="w-48 h-24 relative">
              <BrandLogo />
           </div>
@@ -160,7 +160,7 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
       </div>
 
       {/* Carousel Section */}
-      <div className="flex-1 relative overflow-hidden bg-stone-900 -mt-10 pt-10">
+      <div className="flex-1 relative overflow-hidden bg-stone-900 -mt-8 pt-10">
         {carouselData.map((slide, index) => (
           <div 
             key={slide.id}
@@ -202,7 +202,7 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
       </div>
 
       {/* Bottom Actions */}
-      <div className="bg-white p-6 pb-8 space-y-3 z-20 rounded-t-2xl -mt-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div className="bg-white p-6 pb-8 space-y-3 z-20 rounded-t-3xl -mt-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <button 
           onClick={() => { setContext('new'); setStep('mobile-entry'); }}
           className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex justify-center items-center"
@@ -221,7 +221,7 @@ export const OnboardingFlow: React.FC<OnboardingProps> = ({ step, setStep, setCo
 };
 
 // --- Mobile Entry Screen ---
-export const MobileEntryScreen: React.FC<{ onBack: () => void; onNext: () => void }> = ({ onBack, onNext }) => {
+export const MobileEntryScreen: React.FC<{ onBack: () => void; onNext: (mobile: string) => void }> = ({ onBack, onNext }) => {
   const [mobile, setMobile] = useState('');
 
   return (
@@ -248,7 +248,7 @@ export const MobileEntryScreen: React.FC<{ onBack: () => void; onNext: () => voi
       </div>
 
       <button 
-        onClick={onNext}
+        onClick={() => onNext(mobile)}
         disabled={mobile.length < 10}
         className={`w-full py-4 font-bold rounded-xl transition-all flex justify-center items-center ${
           mobile.length >= 10 
@@ -268,6 +268,22 @@ export const OTPScreen: React.FC<{
   onVerify: () => void; 
 }> = ({ onBack, onVerify }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [timer, setTimer] = useState(60);
+
+  // Countdown Logic
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
+
+  const handleResend = () => {
+    setTimer(60);
+    // Simulate resend logic
+  };
 
   const handleChange = (element: HTMLInputElement, index: number) => {
     const value = element.value;
@@ -346,7 +362,14 @@ export const OTPScreen: React.FC<{
       </div>
 
       <p className="text-center text-stone-500 text-sm mb-8">
-        Didn't receive it? <button className="text-emerald-600 font-bold">Resend in 30s</button>
+        Didn't receive it?{' '}
+        <button 
+          onClick={handleResend}
+          disabled={timer > 0}
+          className={`font-bold transition-colors ${timer > 0 ? 'text-stone-400 cursor-not-allowed' : 'text-emerald-600 hover:text-emerald-700'}`}
+        >
+          {timer > 0 ? `Resend in ${timer}s` : 'Resend Code'}
+        </button>
       </p>
 
       <button 
@@ -472,7 +495,7 @@ export const RoleSelectionScreen: React.FC<{
 }
 
 // --- Traveler Registration Screen ---
-export const TravelerRegistrationScreen: React.FC<{ onComplete: (data: any) => void }> = ({ onComplete }) => {
+export const TravelerRegistrationScreen: React.FC<{ onComplete: (data: any) => void; onBack: () => void }> = ({ onComplete, onBack }) => {
   const [formData, setFormData] = useState({
     nickname: '',
     fullName: '',
@@ -499,8 +522,11 @@ export const TravelerRegistrationScreen: React.FC<{ onComplete: (data: any) => v
 
   return (
     <div className="h-full bg-stone-50 flex flex-col animate-slide-in-right">
-      <div className="bg-white px-6 py-4 border-b border-stone-200 sticky top-0 z-10">
-        <h1 className="font-bold text-stone-800">Traveler Registration</h1>
+      <div className="bg-white px-4 py-4 border-b border-stone-200 sticky top-0 z-10 flex items-center">
+         <button onClick={onBack} className="mr-3 text-stone-500 p-1 hover:bg-stone-100 rounded-full transition-colors">
+            <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+         </button>
+         <h1 className="font-bold text-stone-800 text-lg">Traveler Registration</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">

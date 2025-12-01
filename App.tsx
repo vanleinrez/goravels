@@ -6,6 +6,7 @@ import PlannerScreen from './screens/PlannerScreen';
 import ActivityScreen from './screens/ActivityScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import RestrictedAccessModal from './components/RestrictedAccessModal';
 import { 
   OnboardingFlow, 
   MobileEntryScreen, 
@@ -35,17 +36,24 @@ export type AuthStep =
 const App: React.FC = () => {
   const [authStep, setAuthStep] = useState<AuthStep>('splash');
   const [activeScreen, setActiveScreen] = useState<Screen>('Explore');
+  const [plannerTab, setPlannerTab] = useState<'MyTrip' | 'GroupChat'>('MyTrip'); // Manage Planner Tab
   const [currentUser, setCurrentUser] = useState<User>(mockUser);
   const [authContext, setAuthContext] = useState<'new' | 'existing'>('new');
   const [loginRole, setLoginRole] = useState<'Host' | 'Traveler' | null>(null);
   const [hostStatus, setHostStatus] = useState<'Pending' | 'Active'>('Active');
   
+  // Registration Data
+  const [tempMobile, setTempMobile] = useState('');
+
   // New state to track ongoing activity
   const [isTripActive, setIsTripActive] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   
   // New State for Global SOS
   const [isSosActive, setIsSosActive] = useState(false);
+
+  // Restricted Access State
+  const [showRestrictedModal, setShowRestrictedModal] = useState(false);
 
   // Global Data State
   const [myTrips, setMyTrips] = useState<Trip[]>(mockTrips);
@@ -97,9 +105,13 @@ const App: React.FC = () => {
   const handleGuestAccess = () => {
     setCurrentUser({
       ...mockUser,
-      name: 'Guest Traveler',
+      name: tempMobile ? `Gora ${tempMobile}` : 'Gora Guest',
+      nickname: 'Guest',
       tier: 'Guest',
-      stamps: 0
+      stamps: 0,
+      avatarUrl: '', // Will use default based on logic
+      gender: 'Prefer not to say',
+      phone: tempMobile
     });
     setAuthStep('app');
   };
@@ -112,7 +124,9 @@ const App: React.FC = () => {
         nickname: data.nickname || data.fullName?.split(' ')[0] || 'Traveler',
         tier: 'Explorer',
         location: data.province || mockUser.location,
-        preferences: data.interests || mockUser.preferences
+        preferences: data.interests || mockUser.preferences,
+        gender: data.gender,
+        phone: tempMobile // Persist mobile
     };
     setCurrentUser(updatedUser); 
     setAuthStep('app');
@@ -128,6 +142,7 @@ const App: React.FC = () => {
         phone: data.phone,
         location: data.address,
         isHost: true,
+        gender: data.gender,
         avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop'
     };
     setCurrentUser(hostUser);
@@ -136,7 +151,21 @@ const App: React.FC = () => {
   };
 
   const triggerRegistration = () => {
+    // Legacy support: if called directly
     setAuthStep('traveler-reg');
+    setShowRestrictedModal(false);
+  };
+
+  const handleRestrictedTrigger = () => {
+    setShowRestrictedModal(true);
+  };
+
+  const handleBackToOnboarding = () => {
+    setShowRestrictedModal(false);
+    setAuthStep('welcome');
+    setActiveScreen('Explore');
+    setCurrentUser(mockUser); // Reset to default state
+    setTempMobile('');
   };
 
   const handleSwitchToTraveler = () => {
@@ -155,13 +184,39 @@ const App: React.FC = () => {
     setLoginRole(null);
     setAuthContext('existing');
     setIsSosActive(false);
+    setTempMobile('');
   };
 
   const toggleTripStatus = () => setIsTripActive(!isTripActive);
 
   // Toggle Activity Overlay
   const handleGoClick = () => {
+      // Restrict SOS/Activity for Guest Users
+      if (currentUser.tier === 'Guest') {
+          setShowRestrictedModal(true);
+          return;
+      }
       setIsActivityOpen(true);
+  };
+
+  // Intercept Navigation
+  const handleNavigation = (screen: Screen) => {
+    // Restrict Planner for Guest Users
+    if (screen === 'Planner' && currentUser.tier === 'Guest') {
+      setShowRestrictedModal(true);
+      return;
+    }
+    // Allow Profile (it will show restricted/upsell view)
+    setActiveScreen(screen);
+  };
+
+  const handleMessageHost = () => {
+    if (currentUser.tier === 'Guest') {
+      setShowRestrictedModal(true);
+      return;
+    }
+    setActiveScreen('Planner');
+    setPlannerTab('GroupChat');
   };
 
   const renderContent = () => {
@@ -187,7 +242,7 @@ const App: React.FC = () => {
         return (
           <MobileEntryScreen 
             onBack={() => authContext === 'existing' ? setAuthStep('login-role-selection') : setAuthStep('welcome')} 
-            onNext={() => setAuthStep('otp')} 
+            onNext={(mobile) => { setTempMobile(mobile); setAuthStep('otp'); }} 
           />
         );
       case 'otp':
@@ -207,9 +262,9 @@ const App: React.FC = () => {
           />
         );
       case 'traveler-reg':
-        return <TravelerRegistrationScreen onComplete={handleTravelerRegComplete} />;
+        return <TravelerRegistrationScreen onComplete={handleTravelerRegComplete} onBack={() => setAuthStep('role-selection')} />;
       case 'host-reg':
-        return <HostRegistrationScreen onComplete={handleHostRegComplete} />;
+        return <HostRegistrationScreen onComplete={handleHostRegComplete} onBack={() => setAuthStep('role-selection')} />;
       case 'host-dashboard':
         return (
           <HostDashboardScreen 
@@ -235,12 +290,22 @@ const App: React.FC = () => {
                 />
               )}
 
+              {/* Restricted Access Modal */}
+              {showRestrictedModal && (
+                <RestrictedAccessModal 
+                  onBackToOnboarding={handleBackToOnboarding}
+                  onCancel={() => setShowRestrictedModal(false)}
+                />
+              )}
+
               {activeScreen === 'Explore' && (
                 <DiscoverScreen 
                   user={currentUser} 
-                  onRegister={triggerRegistration} 
+                  onRegister={handleRestrictedTrigger} 
                   onAddTrip={handleAddTrip}
                   onAddNotification={handleAddNotification}
+                  onProfileClick={() => setActiveScreen('Profile')}
+                  onMessageHost={handleMessageHost}
                 />
               )}
               {activeScreen === 'Planner' && (
@@ -249,9 +314,16 @@ const App: React.FC = () => {
                   onToggleTrip={toggleTripStatus}
                   myTrips={myTrips}
                   onAddTrip={handleAddTrip}
+                  activeTab={plannerTab}
+                  onTabChange={setPlannerTab}
                 />
               )}
-              {activeScreen === 'Connect' && <ConnectScreen />}
+              {activeScreen === 'Connect' && (
+                <ConnectScreen 
+                  user={currentUser}
+                  onRestricted={handleRestrictedTrigger}
+                />
+              )}
               {activeScreen === 'Profile' && (
                 <ProfileScreen 
                   user={currentUser} 
@@ -259,12 +331,13 @@ const App: React.FC = () => {
                   onSwitchToHost={handleSwitchToHost}
                   notifications={notifications}
                   onMarkRead={handleMarkRead}
+                  onCompleteRegistration={triggerRegistration}
                 />
               )}
             </main>
             <BottomNav 
               activeScreen={activeScreen} 
-              setActiveScreen={setActiveScreen} 
+              setActiveScreen={handleNavigation} 
               isTripActive={isTripActive}
               isSosActive={isSosActive}
               onGoClick={handleGoClick}

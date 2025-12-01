@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -21,24 +22,35 @@
         width: 100%;
       }
       
-      /* Custom Scrollbar Styling */
-      .custom-scrollbar {
-        scrollbar-width: thin;
-        scrollbar-color: #d1d5db transparent;
+      /* Mobile Scrollbar Hiding Utility */
+      .scrollbar-hide {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
       }
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
       }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #d1d5db;
-        border-radius: 20px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background-color: #9ca3af;
+
+      /* Custom Scrollbar Styling - Effective only for Tablet/Desktop (min-width: 768px) */
+      @media (min-width: 768px) {
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #d1d5db;
+          border-radius: 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: #9ca3af;
+        }
       }
     </style>
   <script type="importmap">
@@ -46,7 +58,10 @@
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0"
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
   }
 }
 </script>

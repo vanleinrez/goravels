@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect } from 'react';
-import type { User, UserStatus, Notification } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import type { User, UserStatus, Notification, MessageThread, ThreadMessage } from '../types';
 import Icon from '../components/Icon';
 
 interface ProfileScreenProps {
@@ -9,7 +8,52 @@ interface ProfileScreenProps {
   onSwitchToHost: () => void;
   notifications: Notification[];
   onMarkRead: () => void;
+  onCompleteRegistration?: () => void;
 }
+
+const MOCK_INBOX_THREADS: MessageThread[] = [
+  {
+    id: 't1',
+    hostName: 'Kuya Ben',
+    hostAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=100&h=100',
+    listingTitle: 'Bukidnon Roadtrip',
+    lastMessage: 'See you tomorrow at the plaza!',
+    timestamp: '10:30 AM',
+    status: 'Active',
+    messages: [
+      { id: 'm1', text: 'Hi, is the van air-conditioned?', sender: 'me', time: 'Yesterday' },
+      { id: 'm2', text: 'Yes po, grandia van active.', sender: 'host', time: 'Yesterday' },
+      { id: 'm3', text: 'Great! See you tomorrow at the plaza!', sender: 'host', time: '10:30 AM' }
+    ]
+  },
+  {
+    id: 't2',
+    hostName: 'Guide Mario',
+    hostAvatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?fit=crop&w=100&h=100',
+    listingTitle: 'Mt. Kitanglad Trek',
+    lastMessage: 'Thank you for visiting!',
+    timestamp: 'Oct 15',
+    status: 'Completed',
+    messages: [
+       { id: 'm1', text: 'Don\'t forget to bring raincoats.', sender: 'host', time: 'Oct 12' },
+       { id: 'm2', text: 'Noted sir.', sender: 'me', time: 'Oct 12' },
+       { id: 'm3', text: 'Thank you for visiting!', sender: 'host', time: 'Oct 15' }
+    ]
+  },
+  {
+    id: 't3',
+    hostName: 'Resort Staff',
+    hostAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?fit=crop&w=100&h=100',
+    listingTitle: 'Camiguin Villa Stay',
+    lastMessage: 'We hope you enjoyed your stay.',
+    timestamp: 'Aug 08',
+    status: 'Completed',
+    messages: [
+        { id: 'm1', text: 'Check out time is 12PM.', sender: 'host', time: 'Aug 08' },
+        { id: 'm2', text: 'We hope you enjoyed your stay.', sender: 'host', time: 'Aug 08' }
+    ]
+  }
+];
 
 // Reusing Input component locally for Edit Modal
 const Input: React.FC<{ label: string; value?: string; placeholder?: string; type?: string; onChange?: (e: any) => void }> = ({ label, value, placeholder, type = 'text', onChange }) => (
@@ -54,11 +98,16 @@ const StatusPill: React.FC<{ status: UserStatus; isActive?: boolean; onClick?: (
   );
 };
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchToHost, notifications, onMarkRead }) => {
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchToHost, notifications, onMarkRead, onCompleteRegistration }) => {
   const [activeTab, setActiveTab] = useState<'Moments' | 'Collectibles' | 'Info'>('Collectibles');
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(user.currentStatus);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  
+  // Inbox State
+  const [showInbox, setShowInbox] = useState(false);
+  const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+  const [inboxInput, setInboxInput] = useState('');
   
   // Edit Profile State
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -97,6 +146,23 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
   const [showNotifications, setShowNotifications] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedThread) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [selectedThread, selectedThread?.messages]);
+
+  // Determine Avatar based on Gender
+  const getAvatar = () => {
+    if (user.avatarUrl) return user.avatarUrl;
+
+    if (user.gender === 'Male') return 'https://cdn-icons-png.flaticon.com/512/4128/4128176.png';
+    if (user.gender === 'Female') return 'https://cdn-icons-png.flaticon.com/512/4128/4128262.png';
+    return 'https://cdn-icons-png.flaticon.com/512/847/847969.png'; // Neutral
+  };
 
   const handleNotificationClick = () => {
       setShowNotifications(!showNotifications);
@@ -147,9 +213,221 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
     alert("OTP Sent to " + editForm.phone);
   };
 
+  const handleSendInboxMessage = () => {
+    if (!inboxInput.trim() || !selectedThread) return;
+    
+    const newMsg: ThreadMessage = {
+      id: Date.now().toString(),
+      text: inboxInput,
+      sender: 'me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const updatedThread = {
+      ...selectedThread,
+      messages: [...selectedThread.messages, newMsg],
+      lastMessage: inboxInput,
+      timestamp: 'Just now'
+    };
+
+    setSelectedThread(updatedThread);
+    setInboxInput('');
+    
+    // Simulate Host Reply
+    setTimeout(() => {
+        const replyMsg: ThreadMessage = {
+            id: (Date.now() + 1).toString(),
+            text: "Thanks for your message! I'll get back to you shortly.",
+            sender: 'host',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setSelectedThread(prev => prev ? ({
+            ...prev,
+            messages: [...prev.messages, replyMsg],
+            lastMessage: replyMsg.text,
+            timestamp: 'Just now'
+        }) : null);
+    }, 2000);
+  };
+
+  // --- INBOX VIEW RENDERER ---
+  const renderInbox = () => (
+      <div className="fixed inset-0 z-[60] bg-stone-50 flex flex-col animate-slide-in-right">
+          {selectedThread ? (
+              // Chat Thread View
+              <div className="flex flex-col h-full">
+                  <div className="bg-white px-4 py-4 border-b border-stone-200 flex items-center justify-between sticky top-0 shadow-sm">
+                      <div className="flex items-center">
+                          <button onClick={() => setSelectedThread(null)} className="mr-3 text-stone-500 hover:bg-stone-100 p-2 rounded-full">
+                              <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+                          </button>
+                          <div className="flex items-center space-x-3">
+                              <img src={selectedThread.hostAvatar} className="w-9 h-9 rounded-full object-cover" />
+                              <div>
+                                  <h2 className="font-bold text-stone-800 text-sm">{selectedThread.hostName}</h2>
+                                  <p className="text-xs text-stone-500">{selectedThread.listingTitle}</p>
+                              </div>
+                          </div>
+                      </div>
+                      <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${selectedThread.status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-stone-200 text-stone-500'}`}>
+                          {selectedThread.status}
+                      </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50">
+                      {selectedThread.messages.map((msg) => (
+                          <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                                  msg.sender === 'me' 
+                                  ? 'bg-emerald-600 text-white rounded-tr-none' 
+                                  : 'bg-white text-stone-800 border border-stone-200 rounded-tl-none'
+                              }`}>
+                                  {msg.text}
+                                  <p className={`text-[9px] mt-1 text-right ${msg.sender === 'me' ? 'text-emerald-100' : 'text-stone-400'}`}>{msg.time}</p>
+                              </div>
+                          </div>
+                      ))}
+                      <div ref={chatEndRef} />
+                  </div>
+
+                  <div className="p-3 bg-white border-t border-stone-200 pb-5">
+                       <div className={`flex items-end space-x-2 bg-stone-100 p-2 rounded-xl border border-stone-200 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all ${selectedThread.status === 'Completed' ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                           {selectedThread.status === 'Active' && (
+                               <button className="p-2 text-stone-400 hover:text-stone-600 transition-colors rounded-full hover:bg-stone-200">
+                                   <Icon className="w-5 h-5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></Icon>
+                               </button>
+                           )}
+                           <textarea 
+                              value={inboxInput}
+                              onChange={(e) => setInboxInput(e.target.value)}
+                              placeholder={selectedThread.status === 'Completed' ? "Activity Ended - Chat Disabled" : "Type a message..."}
+                              disabled={selectedThread.status === 'Completed'}
+                              className="flex-1 bg-transparent border-none focus:ring-0 text-sm max-h-20 py-2 resize-none outline-none disabled:cursor-not-allowed placeholder-stone-400"
+                              rows={1}
+                              onKeyPress={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendInboxMessage(); } }}
+                           />
+                           <button 
+                             onClick={handleSendInboxMessage}
+                             disabled={selectedThread.status === 'Completed' || !inboxInput.trim()}
+                             className={`p-2 rounded-lg transition-all ${
+                                 selectedThread.status === 'Active' && inboxInput.trim()
+                                 ? 'bg-emerald-600 text-white shadow-sm active:scale-95' 
+                                 : 'bg-stone-200 text-stone-400'
+                             }`}
+                           >
+                               <Icon className="w-4 h-4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Icon>
+                           </button>
+                       </div>
+                  </div>
+              </div>
+          ) : (
+              // Inbox List View
+              <div className="flex flex-col h-full">
+                  <div className="bg-white px-4 py-4 border-b border-stone-200 flex items-center sticky top-0">
+                      <button onClick={() => setShowInbox(false)} className="mr-3 text-stone-500 hover:bg-stone-100 p-2 rounded-full">
+                          <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+                      </button>
+                      <h1 className="font-bold text-stone-800 text-lg">Message Inbox</h1>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-2">
+                      {MOCK_INBOX_THREADS.map(thread => {
+                          const lastSender = thread.messages[thread.messages.length - 1]?.sender;
+                          return (
+                          <div 
+                              key={thread.id} 
+                              onClick={() => { setSelectedThread(thread); setInboxInput(''); }}
+                              className="p-3 bg-white hover:bg-stone-50 rounded-xl border-b border-stone-50 flex items-center space-x-3 cursor-pointer transition-colors"
+                          >
+                              <div className="relative">
+                                  <img src={thread.hostAvatar} className="w-12 h-12 rounded-full object-cover border border-stone-100" />
+                                  {thread.status === 'Active' && <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-baseline mb-0.5">
+                                      <h3 className="font-bold text-stone-800 text-sm truncate">{thread.hostName}</h3>
+                                      <span className="text-[10px] text-stone-400 whitespace-nowrap ml-2">{thread.timestamp}</span>
+                                  </div>
+                                  <p className="text-xs font-bold text-stone-500 mb-0.5 truncate">{thread.listingTitle}</p>
+                                  <p className="text-xs text-stone-400 truncate">{lastSender === 'me' ? 'You: ' : ''}{thread.lastMessage}</p>
+                              </div>
+                          </div>
+                          );
+                      })}
+                  </div>
+              </div>
+          )}
+      </div>
+  );
+
+  // --- GUEST VIEW ---
+  if (user.tier === 'Guest') {
+    return (
+        <div className="bg-stone-50 min-h-full p-6 flex flex-col items-center justify-center animate-fade-in relative">
+            <button onClick={onLogout} className="absolute top-4 right-4 text-stone-400 font-bold text-xs hover:text-red-500">Log Out</button>
+
+            <div className="w-24 h-24 bg-stone-200 rounded-full flex items-center justify-center mb-6 border-4 border-white shadow-lg relative">
+                <Icon className="w-12 h-12 text-stone-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>
+                <div className="absolute -bottom-2 -right-2 bg-amber-500 text-white p-2 rounded-full border-2 border-white">
+                    <Icon className="w-4 h-4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></Icon>
+                </div>
+            </div>
+
+            <h1 className="text-2xl font-bold text-stone-800 text-center mb-2">Complete Your Profile</h1>
+            <p className="text-stone-500 text-center max-w-xs mb-8">
+                You are currently browsing as <span className="font-bold text-stone-800">{user.name}</span>. 
+                Complete your registration to unlock exclusive features and rewards.
+            </p>
+
+            <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-sm border border-stone-100 mb-8 space-y-4">
+                <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+                        <Icon className="w-6 h-6"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></Icon>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-bold text-stone-800 text-sm">Earn the "Explorer" Badge</h3>
+                        <p className="text-xs text-stone-500">Show off your traveler status</p>
+                    </div>
+                </div>
+                 <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
+                        <Icon className="w-6 h-6"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-bold text-stone-800 text-sm">Get ₱500 Voucher</h3>
+                        <p className="text-xs text-stone-500">Use code <span className="font-mono bg-purple-100 px-1 rounded">GORA-WELCOME</span> on first trip</p>
+                    </div>
+                </div>
+                 <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+                         <Icon className="w-6 h-6"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></Icon>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-bold text-stone-800 text-sm">Unlock SOS & Planner</h3>
+                        <p className="text-xs text-stone-500">Access safety tools and group chats</p>
+                    </div>
+                </div>
+            </div>
+
+            <button 
+                onClick={onCompleteRegistration}
+                className="w-full max-w-sm py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 active:scale-95 transition-transform"
+            >
+                Complete Registration Now
+            </button>
+        </div>
+    );
+  }
+
+  // --- REGISTERED VIEW ---
+  const avatarSrc = getAvatar();
+
   return (
     <div className="bg-stone-50 min-h-full pb-24 relative overflow-hidden">
       
+      {/* --- INBOX OVERLAY --- */}
+      {showInbox && renderInbox()}
+
       {/* --- EDIT PROFILE MODAL --- */}
       {showEditProfile && (
           <div className="fixed inset-0 z-50 bg-stone-50 flex flex-col animate-slide-in-right">
@@ -161,7 +439,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
               <div className="p-6 overflow-y-auto">
                   <div className="flex flex-col items-center mb-6">
                       <div className="relative">
-                          <img src={user.avatarUrl} className="w-24 h-24 rounded-full object-cover opacity-80" />
+                          <img src={avatarSrc} className="w-24 h-24 rounded-full object-cover" />
                           <button className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full text-white font-bold text-xs">
                              <Icon className="w-6 h-6"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></Icon>
                           </button>
@@ -236,9 +514,35 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
                                   </div>
                                   <Icon className="w-4 h-4 text-stone-300"><polyline points="9 18 15 12 9 6" /></Icon>
                               </button>
+
+                              {/* Message Inbox Button */}
+                              <button onClick={() => { setShowMenu(false); setShowInbox(true); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors text-left group">
+                                  <div className="flex items-center space-x-3">
+                                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100">
+                                         <Icon className="w-4 h-4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Icon>
+                                      </div>
+                                      <span className="font-bold text-sm text-stone-700">Message Inbox</span>
+                                  </div>
+                                  {/* Optional Badge for unread */}
+                                  <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full">3</span>
+                              </button>
+
+                              {/* Host Inbox - Visible for Host Only */}
+                              {user.isHost && (
+                                <button className="w-full flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors text-left group">
+                                    <div className="flex items-center space-x-3">
+                                       <div className="p-2 bg-orange-50 text-orange-600 rounded-lg group-hover:bg-orange-100">
+                                         <Icon className="w-4 h-4"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></Icon>
+                                       </div>
+                                       <span className="font-bold text-sm text-stone-700">Host Dashboard Msgs</span>
+                                    </div>
+                                    <Icon className="w-4 h-4 text-stone-300"><polyline points="9 18 15 12 9 6" /></Icon>
+                                </button>
+                              )}
+
                               <button onClick={() => alert("Preferences coming soon")} className="w-full flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors text-left group">
                                   <div className="flex items-center space-x-3">
-                                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100"><Icon className="w-4 h-4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></Icon></div>
+                                      <div className="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-100"><Icon className="w-4 h-4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></Icon></div>
                                       <span className="font-bold text-sm text-stone-700">Preferences</span>
                                   </div>
                                   <Icon className="w-4 h-4 text-stone-300"><polyline points="9 18 15 12 9 6" /></Icon>
@@ -286,13 +590,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
                               <button className="w-full flex items-center p-3 hover:bg-stone-50 rounded-xl transition-colors text-left text-sm font-medium text-stone-600">
                                   <Icon className="w-4 h-4 mr-3 text-stone-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></Icon>
                                   Invite (Voucher)
-                              </button>
-                              <button className="w-full flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors text-left text-sm font-medium text-stone-600">
-                                  <div className="flex items-center">
-                                     <Icon className="w-4 h-4 mr-3 text-stone-400"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Icon>
-                                     Messages
-                                  </div>
-                                  <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full">1</span>
                               </button>
                            </div>
                       </div>
@@ -361,7 +658,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout, onSwitchT
             <div className="absolute -inset-1 bg-gradient-to-tr from-yellow-400 to-fuchsia-600 rounded-full p-1"></div>
             <div className="relative bg-white p-1 rounded-full">
                <img
-                src={user.avatarUrl}
+                src={avatarSrc}
                 alt={user.name}
                 className="w-24 h-24 rounded-full object-cover"
               />

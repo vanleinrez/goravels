@@ -11,6 +11,8 @@ interface DiscoverScreenProps {
   onRegister: () => void;
   onAddTrip?: (trip: Trip) => void;
   onAddNotification?: (notification: Notification) => void;
+  onProfileClick: () => void;
+  onMessageHost?: () => void;
 }
 
 type ViewMode = 'list' | 'map';
@@ -36,7 +38,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     { id: 'counter', name: 'Over-the-Counter', icon: 'https://cdn-icons-png.flaticon.com/512/2331/2331941.png', feePercentage: 0.01 }
 ];
 
-const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAddTrip, onAddNotification }) => {
+const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAddTrip, onAddNotification, onProfileClick, onMessageHost }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [showAlert, setShowAlert] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<ListingCategory | 'All'>('All');
@@ -82,6 +84,19 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
       setCurrentImageIndex(0);
   }, [selectedListing]);
 
+  // Determine Avatar based on Gender
+  const getAvatar = () => {
+    if (user.tier === 'Guest') {
+        // Generic Icon
+        return null; 
+    }
+    if (user.avatarUrl) return user.avatarUrl;
+
+    if (user.gender === 'Male') return 'https://cdn-icons-png.flaticon.com/512/4128/4128176.png';
+    if (user.gender === 'Female') return 'https://cdn-icons-png.flaticon.com/512/4128/4128262.png';
+    return 'https://cdn-icons-png.flaticon.com/512/847/847969.png'; // Neutral
+  };
+
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
       console.warn("Geolocation is not supported by this browser.");
@@ -114,15 +129,26 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
     );
   };
 
-  const handleProtectedAction = (listing?: Listing) => {
-    if (user.tier === 'Guest') {
-      onRegister();
-    } else {
-      if (listing) {
-          setSelectedListing(listing);
-          setBookingStep('overview');
+  const handleListingClick = (listing: Listing) => {
+    setSelectedListing(listing);
+    setBookingStep('overview');
+  };
+
+  const handleHostProfileClick = () => {
+      if (user.tier === 'Guest') {
+          onRegister(); // Trigger restricted modal
+      } else {
+          setBookingStep('host-profile');
       }
-    }
+  };
+
+  const handleProceedToPayment = () => {
+      if (user.tier === 'Guest') {
+          // Trigger the App-level restricted access modal via the prop
+          onRegister(); 
+      } else {
+          setBookingStep('payment');
+      }
   };
 
   const handleBook = () => {
@@ -269,12 +295,25 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
                 <p className="text-stone-500 mb-8 max-w-xs">
                     Your payment is being processed. You can check your notification for payment status updates.
                 </p>
-                <button 
-                    onClick={() => { setSelectedListing(null); setBookingStep('overview'); }}
-                    className="w-full bg-stone-900 text-white py-4 rounded-xl font-bold shadow-lg"
-                >
-                    Continue Searching Rural Discoveries
-                </button>
+                <div className="w-full space-y-3">
+                    <button 
+                        onClick={() => { 
+                            if(onMessageHost) onMessageHost();
+                            setSelectedListing(null); 
+                            setBookingStep('overview'); 
+                        }}
+                        className="w-full bg-stone-900 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center"
+                    >
+                        <Icon className="w-5 h-5 mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Icon>
+                        Message Host
+                    </button>
+                    <button 
+                        onClick={() => { setSelectedListing(null); setBookingStep('overview'); }}
+                        className="w-full bg-white text-stone-600 py-4 rounded-xl font-bold border border-stone-200 hover:bg-stone-50"
+                    >
+                        Continue Searching
+                    </button>
+                </div>
             </div>
         );
     }
@@ -483,7 +522,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
                  <div className="space-y-8 pb-10">
                      {/* Host Profile Link */}
                      {selectedListing.host && (
-                         <div onClick={() => setBookingStep('host-profile')} className="bg-stone-50 p-4 rounded-xl border border-stone-100 flex items-center justify-between cursor-pointer hover:bg-stone-100 transition-colors">
+                         <div onClick={handleHostProfileClick} className="bg-stone-50 p-4 rounded-xl border border-stone-100 flex items-center justify-between cursor-pointer hover:bg-stone-100 transition-colors">
                              <div className="flex items-center space-x-3">
                                  <img src={selectedListing.host.avatar} className="w-10 h-10 rounded-full object-cover" />
                                  <div>
@@ -535,8 +574,13 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
                      </div>
                  </div>
 
-                 <div className="sticky bottom-0 bg-white p-4 border-t border-stone-100 -mx-6 -mb-6">
-                    <button onClick={() => setBookingStep('payment')} className="w-full bg-stone-900 text-white py-3 rounded-xl font-bold hover:bg-stone-800 transition-colors">Proceed to Payment</button>
+                 <div className="mt-8 pt-6 border-t border-stone-100">
+                    <button 
+                        onClick={handleProceedToPayment} 
+                        className="w-full bg-stone-900 text-white py-4 rounded-xl font-bold hover:bg-stone-800 transition-all shadow-lg active:scale-95"
+                    >
+                        Proceed to Payment
+                    </button>
                  </div>
              </div>
          );
@@ -652,6 +696,8 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
      }
   };
 
+  const avatarSrc = getAvatar();
+
   return (
     <div className="bg-stone-50 min-h-full pb-20 relative">
       
@@ -670,7 +716,9 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
             </div>
         </div>
       )}
-
+      
+      {/* ... Rest of component ... */}
+      
       {/* Weather Alert Banner */}
       {showAlert && (
         <div className="bg-amber-100 border-b border-amber-200 px-4 py-3 flex justify-between items-start animate-fade-in sticky top-0 z-30">
@@ -694,14 +742,21 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
       <div className="p-4 space-y-6">
         <header className="flex justify-between items-center">
           <div>
-            <p className="text-stone-500 text-sm font-medium">Mabuhay,</p>
-            <h1 className="text-2xl font-bold text-stone-800">{user.name.split(' ')[0]}!</h1>
+            <p className="text-stone-500 text-sm font-medium">
+              {user.tier === 'Guest' ? 'Mabuhay!' : 'Mabuhay,'}
+            </p>
+            <h1 className="text-2xl font-bold text-stone-800">
+              {user.tier === 'Guest' ? user.name : `${user.name.split(' ')[0]}!`}
+            </h1>
           </div>
-          <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 relative overflow-hidden shadow-sm">
-             {user.tier === 'Guest' ? (
-                 <Icon className="w-5 h-5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>
+          <div 
+            onClick={onProfileClick}
+            className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 relative overflow-hidden shadow-sm cursor-pointer hover:ring-2 hover:ring-emerald-300 transition-all"
+          >
+             {avatarSrc ? (
+                <img src={avatarSrc} alt="User" className="w-full h-full object-cover" />
              ) : (
-                <img src={user.avatarUrl} alt="User" className="w-full h-full object-cover" />
+                <Icon className="w-5 h-5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>
              )}
           </div>
         </header>
@@ -764,7 +819,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
                    </h2>
                    <div className="flex overflow-x-auto pb-4 -mx-4 px-4 space-x-4 scrollbar-hide">
                       {suggestedListings.map(listing => (
-                          <div key={listing.id} onClick={() => handleProtectedAction(listing)}>
+                          <div key={listing.id} onClick={() => handleListingClick(listing)}>
                              <ListingCard listing={listing} />
                           </div>
                       ))}
@@ -774,7 +829,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
 
             {/* Campaign Banner - Only show if no search query */}
             {!searchQuery && (
-                <div onClick={() => handleProtectedAction()} className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                <div onClick={() => handleListingClick(mockListings[0])} className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden cursor-pointer active:scale-95 transition-transform">
                 <div className="relative z-10">
                     <span className="bg-white/20 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Featured Campaign</span>
                     <h2 className="font-bold text-xl mt-2">Tara sa Bukidnon! 🏔️</h2>
@@ -801,7 +856,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {mockListings.filter(l => l.isTrending).map(listing => (
-                        <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="flex bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                        <div key={listing.id} onClick={() => handleListingClick(listing)} className="flex bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform">
                             <img src={listing.imageUrl} alt={listing.title} className="w-24 h-24 object-cover" />
                             <div className="p-3 flex-1 flex flex-col justify-center">
                             <h3 className="font-bold text-stone-800 text-sm mb-1">{listing.title}</h3>
@@ -850,7 +905,7 @@ const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ user, onRegister, onAdd
                        
                        <div className="space-y-6">
                           {visibleListings.slice(0, displayLimit).map(listing => (
-                              <div key={listing.id} onClick={() => handleProtectedAction(listing)} className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform relative group">
+                              <div key={listing.id} onClick={() => handleListingClick(listing)} className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden cursor-pointer active:scale-95 transition-transform relative group">
                                   <div className="h-48 relative">
                                       <img src={listing.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>

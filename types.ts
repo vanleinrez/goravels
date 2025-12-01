@@ -59,6 +59,7 @@ export interface User {
   posts?: Post[];
   badges?: Badge[];
   preferences?: string[];
+  gender?: 'Male' | 'Female' | 'Prefer not to say';
 }
 
 export interface Listing {
@@ -193,4 +194,23 @@ export interface PlannerChannel {
     name: string;
     type: 'text' | 'voice';
     unreadCount: number;
+}
+
+// --- NEW TYPES FOR MESSAGING ---
+export interface ThreadMessage {
+  id: string;
+  text: string;
+  sender: 'me' | 'host';
+  time: string;
+}
+
+export interface MessageThread {
+  id: string;
+  hostName: string;
+  hostAvatar: string;
+  listingTitle: string;
+  lastMessage: string;
+  timestamp: string;
+  status: 'Active' | 'Completed';
+  messages: ThreadMessage[];
 }

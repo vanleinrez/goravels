@@ -2,12 +2,25 @@
 import React, { useState } from 'react';
 import { mockTravelers, mockPosts, mockBadges } from '../constants';
 import Icon from '../components/Icon';
-import type { Badge, UserLevel, UserStatus, Traveler } from '../types';
+import type { Badge, UserLevel, UserStatus, Traveler, User } from '../types';
 
-const ConnectScreen: React.FC = () => {
+interface ConnectScreenProps {
+  user?: User;
+  onRestricted?: () => void;
+}
+
+const ConnectScreen: React.FC<ConnectScreenProps> = ({ user, onRestricted }) => {
   const [activeTab, setActiveTab] = useState<'Feed' | 'Travelers'>('Feed');
   const [selectedTraveler, setSelectedTraveler] = useState<Traveler | null>(null);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+
+  const handleProtectedAction = (action: () => void) => {
+    if (user?.tier === 'Guest' && onRestricted) {
+      onRestricted();
+    } else {
+      action();
+    }
+  };
 
   // Badge Modal
   const renderBadgeModal = () => {
@@ -174,7 +187,7 @@ const ConnectScreen: React.FC = () => {
 
   const TravelerCard: React.FC<{ traveler: Traveler, actionType?: 'Follow' | 'Nudge' }> = ({ traveler, actionType = 'Follow' }) => (
     <div 
-        onClick={() => setSelectedTraveler(traveler)}
+        onClick={() => handleProtectedAction(() => setSelectedTraveler(traveler))}
         className={`bg-white p-4 rounded-2xl shadow-sm border flex items-center justify-between mb-3 cursor-pointer active:scale-95 transition-all ${traveler.isSosActive ? 'border-red-300 ring-2 ring-red-100' : 'border-stone-100 hover:border-emerald-200'}`}
     >
       <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -219,7 +232,10 @@ const ConnectScreen: React.FC = () => {
       </div>
       
       <button 
-        onClick={(e) => e.stopPropagation()} // Prevent triggering card click
+        onClick={(e) => {
+          e.stopPropagation();
+          handleProtectedAction(() => console.log('Followed'));
+        }} 
         className={`ml-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-transform active:scale-95 flex-shrink-0 ${
         actionType === 'Nudge' 
           ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' 
@@ -260,8 +276,16 @@ const ConnectScreen: React.FC = () => {
                   {/* Post Creation Placeholder */}
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center space-x-3 mb-6">
                       <div className="w-10 h-10 bg-stone-200 rounded-full"></div>
-                      <input type="text" placeholder="Share your adventure..." className="flex-1 bg-stone-50 rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500" />
-                      <Icon className="w-6 h-6 text-emerald-600"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></Icon>
+                      <input 
+                        type="text" 
+                        placeholder="Share your adventure..." 
+                        onClick={() => handleProtectedAction(() => {})}
+                        className="flex-1 bg-stone-50 rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer" 
+                        readOnly={user?.tier === 'Guest'}
+                      />
+                      <button onClick={() => handleProtectedAction(() => {})}>
+                        <Icon className="w-6 h-6 text-emerald-600"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></Icon>
+                      </button>
                   </div>
 
                   {mockPosts.map((post) => (
@@ -296,17 +320,27 @@ const ConnectScreen: React.FC = () => {
                           <div className="p-4">
                               <div className="flex justify-between items-center mb-3">
                                   <div className="flex space-x-4">
-                                      <button className="flex items-center space-x-1 group">
+                                      <button 
+                                        onClick={() => handleProtectedAction(() => console.log('Like'))}
+                                        className="flex items-center space-x-1 group"
+                                      >
                                           <Icon className="w-6 h-6 text-stone-800 group-hover:text-red-500 transition-colors"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></Icon>
                                           <span className="text-sm font-bold text-stone-800">{post.likes}</span>
                                       </button>
-                                      <button className="flex items-center space-x-1 group">
+                                      <button 
+                                        onClick={() => handleProtectedAction(() => console.log('Comment'))}
+                                        className="flex items-center space-x-1 group"
+                                      >
                                           <Icon className="w-6 h-6 text-stone-800 group-hover:text-blue-500 transition-colors"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></Icon>
                                           <span className="text-sm font-bold text-stone-800">{post.comments}</span>
                                       </button>
-                                      <button><Icon className="w-6 h-6 text-stone-800 hover:text-emerald-600"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Icon></button>
+                                      <button onClick={() => handleProtectedAction(() => console.log('Share'))}>
+                                        <Icon className="w-6 h-6 text-stone-800 hover:text-emerald-600"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Icon>
+                                      </button>
                                   </div>
-                                  <button><Icon className="w-6 h-6 text-stone-800 hover:text-yellow-500"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></Icon></button>
+                                  <button onClick={() => handleProtectedAction(() => console.log('Bookmark'))}>
+                                    <Icon className="w-6 h-6 text-stone-800 hover:text-yellow-500"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></Icon>
+                                  </button>
                               </div>
                               <p className="text-sm text-stone-700 leading-relaxed mb-2">
                                   <span className="font-bold mr-2">{post.user.name}</span>

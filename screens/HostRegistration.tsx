@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 
 interface HostRegistrationProps {
   onComplete: (data: any) => void;
+  onBack: () => void;
 }
 
 const Input: React.FC<{ 
@@ -25,7 +26,7 @@ const Input: React.FC<{
   </div>
 );
 
-const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete }) => {
+const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(1);
   const [contactMethod, setContactMethod] = useState<'Call' | 'Email' | 'Text'>('Email');
   
@@ -107,8 +108,13 @@ const HostRegistrationScreen: React.FC<HostRegistrationProps> = ({ onComplete })
   return (
     <div className="h-full bg-stone-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white px-6 py-4 border-b border-stone-200 flex justify-between items-center sticky top-0 z-10">
-        <h1 className="font-bold text-stone-800">Host Registration</h1>
+      <div className="bg-white px-4 py-4 border-b border-stone-200 flex justify-between items-center sticky top-0 z-10">
+        <div className="flex items-center">
+             <button onClick={onBack} className="mr-3 text-stone-500 p-1 hover:bg-stone-100 rounded-full transition-colors">
+                <Icon className="w-6 h-6"><path d="m15 18-6-6 6-6"/></Icon>
+             </button>
+             <h1 className="font-bold text-stone-800">Host Registration</h1>
+        </div>
         <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Step {step} of 5</span>
       </div>
 
